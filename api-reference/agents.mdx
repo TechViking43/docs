@@ -1,5 +1,5 @@
 ---
-title: "Agents API — Create and Manage AI Agents"
+title: "QuantumFlow Agents API — Create and Manage AI Agents"
 sidebarTitle: "Agents"
 description: "REST API endpoints for creating, retrieving, updating, and deleting AI agents in QuantumFlow AI. Includes request and response schemas."
 ---
@@ -10,7 +10,7 @@ Agents are the core intelligence units in QuantumFlow AI. Each agent is a config
 
 ## Create an agent
 
-<api-endpoint method="POST" path="/v1/agents" />
+`POST /v1/agents`
 
 Creates a new agent and returns it with a system-assigned `id`. The agent starts in `active` status and is immediately available to be referenced in workflow steps.
 
@@ -33,25 +33,64 @@ Creates a new agent and returns it with a system-assigned `id`. The agent starts
 </ParamField>
 
 <ParamField body="escalation" type="object">
-  Optional escalation configuration. When `enabled` is `true`, the agent routes outputs that require human review to the specified channel.
-
-  ```json
-  { "enabled": true, "channel": "slack_channel_id" }
-  ```
+  Optional escalation configuration. When `enabled` is `true`, the agent routes outputs that require human review to the specified channel. Example: `{ "enabled": true, "channel": "slack_channel_id" }`.
 </ParamField>
 
 ### Request and response example
 
 <CodeGroup>
 
-```json Request
-{
-  "name": "Support Ticket Analyzer",
-  "instructions": "You analyze support tickets and summarize trends. Output a bullet list of top issues.",
-  "model": "gpt-4o",
-  "tools": ["int_zendesk_01", "int_slack_01"]
-}
+```bash curl
+curl -X POST https://api.quantumflow.ai/v1/agents \
+  -H "Authorization: Bearer qf_live_••••••••••••••••" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Support Ticket Analyzer",
+    "instructions": "You analyze support tickets and summarize trends. Output a bullet list of top issues.",
+    "model": "gpt-4o",
+    "tools": ["int_zendesk_01", "int_slack_01"]
+  }'
 ```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.quantumflow.ai/v1/agents",
+    headers={
+        "Authorization": "Bearer qf_live_••••••••••••••••",
+        "Content-Type": "application/json",
+    },
+    json={
+        "name": "Support Ticket Analyzer",
+        "instructions": "You analyze support tickets and summarize trends. Output a bullet list of top issues.",
+        "model": "gpt-4o",
+        "tools": ["int_zendesk_01", "int_slack_01"],
+    },
+)
+agent = response.json()
+print(agent["id"])
+```
+
+```javascript JavaScript
+const response = await fetch("https://api.quantumflow.ai/v1/agents", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer qf_live_••••••••••••••••",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    name: "Support Ticket Analyzer",
+    instructions: "You analyze support tickets and summarize trends. Output a bullet list of top issues.",
+    model: "gpt-4o",
+    tools: ["int_zendesk_01", "int_slack_01"],
+  }),
+});
+const agent = await response.json();
+console.log(agent.id);
+```
+
+</CodeGroup>
 
 ```json Response 201
 {
@@ -63,13 +102,11 @@ Creates a new agent and returns it with a system-assigned `id`. The agent starts
 }
 ```
 
-</CodeGroup>
-
 ---
 
 ## Retrieve an agent
 
-<api-endpoint method="GET" path="/v1/agents/{id}" />
+`GET /v1/agents/{id}`
 
 Returns the full details of a single agent identified by its `id`.
 
@@ -117,11 +154,54 @@ Returns the full details of a single agent identified by its `id`.
   ISO 8601 timestamp of when the agent was last updated.
 </ResponseField>
 
+### Request and response example
+
+<CodeGroup>
+
+```bash curl
+curl https://api.quantumflow.ai/v1/agents/agt_01j9def456 \
+  -H "Authorization: Bearer qf_live_••••••••••••••••"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.quantumflow.ai/v1/agents/agt_01j9def456",
+    headers={"Authorization": "Bearer qf_live_••••••••••••••••"},
+)
+agent = response.json()
+```
+
+```javascript JavaScript
+const response = await fetch(
+  "https://api.quantumflow.ai/v1/agents/agt_01j9def456",
+  { headers: { "Authorization": "Bearer qf_live_••••••••••••••••" } }
+);
+const agent = await response.json();
+```
+
+</CodeGroup>
+
+```json Response 200
+{
+  "id": "agt_01j9def456",
+  "name": "Support Ticket Analyzer",
+  "instructions": "You analyze support tickets and summarize trends. Output a bullet list of top issues.",
+  "model": "gpt-4o",
+  "tools": ["int_zendesk_01", "int_slack_01"],
+  "escalation": null,
+  "status": "active",
+  "created_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T10:30:00Z"
+}
+```
+
 ---
 
 ## Update an agent
 
-<api-endpoint method="PATCH" path="/v1/agents/{id}" />
+`PATCH /v1/agents/{id}`
 
 Partially updates an existing agent. Include only the fields you want to change — all other fields remain unchanged. You can update any field that is accepted by the create endpoint.
 
@@ -131,16 +211,78 @@ Partially updates an existing agent. Include only the fields you want to change 
   The unique identifier of the agent to update.
 </ParamField>
 
+### Request body
+
+<ParamField body="name" type="string">
+  Updated display name for the agent.
+</ParamField>
+
+<ParamField body="instructions" type="string">
+  Updated system prompt for the agent.
+</ParamField>
+
+<ParamField body="model" type="string">
+  Updated AI model. Accepted values: `gpt-4o`, `gpt-4o-mini`, `claude-3-5-sonnet`.
+</ParamField>
+
+<ParamField body="tools" type="array">
+  Updated list of integration IDs the agent is permitted to use. Replaces the existing list entirely.
+</ParamField>
+
+<ParamField body="escalation" type="object">
+  Updated escalation configuration. Set `enabled` to `false` to disable escalation.
+</ParamField>
+
 ### Request and response example
 
 <CodeGroup>
 
-```json Request
-{
-  "model": "claude-3-5-sonnet",
-  "escalation": { "enabled": true, "channel": "C04ABC123" }
-}
+```bash curl
+curl -X PATCH https://api.quantumflow.ai/v1/agents/agt_01j9def456 \
+  -H "Authorization: Bearer qf_live_••••••••••••••••" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "claude-3-5-sonnet",
+    "escalation": { "enabled": true, "channel": "C04ABC123" }
+  }'
 ```
+
+```python Python
+import requests
+
+response = requests.patch(
+    "https://api.quantumflow.ai/v1/agents/agt_01j9def456",
+    headers={
+        "Authorization": "Bearer qf_live_••••••••••••••••",
+        "Content-Type": "application/json",
+    },
+    json={
+        "model": "claude-3-5-sonnet",
+        "escalation": {"enabled": True, "channel": "C04ABC123"},
+    },
+)
+agent = response.json()
+```
+
+```javascript JavaScript
+const response = await fetch(
+  "https://api.quantumflow.ai/v1/agents/agt_01j9def456",
+  {
+    method: "PATCH",
+    headers: {
+      "Authorization": "Bearer qf_live_••••••••••••••••",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "claude-3-5-sonnet",
+      escalation: { enabled: true, channel: "C04ABC123" },
+    }),
+  }
+);
+const agent = await response.json();
+```
+
+</CodeGroup>
 
 ```json Response 200
 {
@@ -152,13 +294,11 @@ Partially updates an existing agent. Include only the fields you want to change 
 }
 ```
 
-</CodeGroup>
-
 ---
 
 ## Delete an agent
 
-<api-endpoint method="DELETE" path="/v1/agents/{id}" />
+`DELETE /v1/agents/{id}`
 
 Permanently deletes an agent. Returns `204 No Content` on success. This action cannot be undone.
 
@@ -172,11 +312,38 @@ Permanently deletes an agent. Returns `204 No Content` on success. This action c
 Deleting an agent that is referenced by one or more active workflow steps will cause those steps to fail at runtime. Before deleting an agent, pause or update any workflows that depend on it, or replace the agent reference in those steps with an alternative agent.
 </Warning>
 
+<CodeGroup>
+
+```bash curl
+curl -X DELETE https://api.quantumflow.ai/v1/agents/agt_01j9def456 \
+  -H "Authorization: Bearer qf_live_••••••••••••••••"
+```
+
+```python Python
+import requests
+
+requests.delete(
+    "https://api.quantumflow.ai/v1/agents/agt_01j9def456",
+    headers={"Authorization": "Bearer qf_live_••••••••••••••••"},
+)
+# Returns 204 No Content on success
+```
+
+```javascript JavaScript
+await fetch("https://api.quantumflow.ai/v1/agents/agt_01j9def456", {
+  method: "DELETE",
+  headers: { "Authorization": "Bearer qf_live_••••••••••••••••" },
+});
+// Returns 204 No Content on success
+```
+
+</CodeGroup>
+
 ---
 
 ## List agents
 
-<api-endpoint method="GET" path="/v1/agents" />
+`GET /v1/agents`
 
 Returns a paginated list of all agents in your workspace, ordered by creation date descending.
 
@@ -190,9 +357,39 @@ Returns a paginated list of all agents in your workspace, ordered by creation da
   Opaque pagination cursor returned as `next_cursor` in the previous response. Omit this parameter on the first request.
 </ParamField>
 
-### Response example
+### Request and response example
 
-```json
+<CodeGroup>
+
+```bash curl
+curl "https://api.quantumflow.ai/v1/agents?limit=20" \
+  -H "Authorization: Bearer qf_live_••••••••••••••••"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.quantumflow.ai/v1/agents",
+    headers={"Authorization": "Bearer qf_live_••••••••••••••••"},
+    params={"limit": 20},
+)
+data = response.json()
+agents = data["data"]
+next_cursor = data.get("next_cursor")
+```
+
+```javascript JavaScript
+const response = await fetch(
+  "https://api.quantumflow.ai/v1/agents?limit=20",
+  { headers: { "Authorization": "Bearer qf_live_••••••••••••••••" } }
+);
+const { data: agents, next_cursor } = await response.json();
+```
+
+</CodeGroup>
+
+```json Response 200
 {
   "data": [
     {

@@ -1,5 +1,5 @@
 ---
-title: "Workflows API — Build and Trigger Automations"
+title: "Workflows API — Build, Trigger, and Manage Automations"
 sidebarTitle: "Workflows"
 description: "REST API endpoints for creating workflows, managing their steps, triggering runs, and checking execution status in QuantumFlow AI."
 ---
@@ -10,7 +10,7 @@ Workflows are the orchestration layer of QuantumFlow AI. A workflow chains toget
 
 ## Create a workflow
 
-<api-endpoint method="POST" path="/v1/workflows" />
+`POST /v1/workflows`
 
 Creates a new workflow in `draft` status. A draft workflow can be configured and tested without running automatically. Activate it explicitly with a `PATCH` request when you are ready.
 
@@ -34,16 +34,63 @@ Creates a new workflow in `draft` status. A draft workflow can be configured and
 
 <CodeGroup>
 
-```json Request
-{
-  "name": "Daily Support Summary",
-  "description": "Runs every morning at 9am on weekdays",
-  "trigger": {
-    "type": "schedule",
-    "config": { "cron": "0 9 * * 1-5" }
-  }
-}
+```bash curl
+curl -X POST https://api.quantumflow.ai/v1/workflows \
+  -H "Authorization: Bearer qf_live_••••••••••••••••" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Daily Support Summary",
+    "description": "Runs every morning at 9am on weekdays",
+    "trigger": {
+      "type": "schedule",
+      "config": { "cron": "0 9 * * 1-5" }
+    }
+  }'
 ```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.quantumflow.ai/v1/workflows",
+    headers={
+        "Authorization": "Bearer qf_live_••••••••••••••••",
+        "Content-Type": "application/json",
+    },
+    json={
+        "name": "Daily Support Summary",
+        "description": "Runs every morning at 9am on weekdays",
+        "trigger": {
+            "type": "schedule",
+            "config": {"cron": "0 9 * * 1-5"},
+        },
+    },
+)
+workflow = response.json()
+print(workflow["id"])
+```
+
+```javascript JavaScript
+const response = await fetch("https://api.quantumflow.ai/v1/workflows", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer qf_live_••••••••••••••••",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    name: "Daily Support Summary",
+    description: "Runs every morning at 9am on weekdays",
+    trigger: {
+      type: "schedule",
+      config: { cron: "0 9 * * 1-5" },
+    },
+  }),
+});
+const workflow = await response.json();
+console.log(workflow.id);
+```
+
+</CodeGroup>
 
 ```json Response 201
 {
@@ -55,13 +102,11 @@ Creates a new workflow in `draft` status. A draft workflow can be configured and
 }
 ```
 
-</CodeGroup>
-
 ---
 
 ## Trigger a workflow run
 
-<api-endpoint method="POST" path="/v1/workflows/{id}/run" />
+`POST /v1/workflows/{id}/run`
 
 Manually triggers a single execution of the workflow, regardless of its configured trigger type. This is useful for testing, on-demand runs, and integrating QuantumFlow into external orchestration systems. The endpoint enqueues the run immediately and returns a `task_id` you can use to track execution via the [Tasks API](/api-reference/tasks).
 
@@ -75,15 +120,56 @@ Manually triggers a single execution of the workflow, regardless of its configur
 
 <ParamField body="inputs" type="object">
   An optional key-value map of runtime input variables to pass into the workflow. These are accessible to agents and step logic within the run context.
-
-  ```json
-  { "inputs": { "date_range": "last_7_days", "team": "support" } }
-  ```
 </ParamField>
 
-### Response example
+### Request and response example
 
-```json
+<CodeGroup>
+
+```bash curl
+curl -X POST https://api.quantumflow.ai/v1/workflows/wf_01j9abc123/run \
+  -H "Authorization: Bearer qf_live_••••••••••••••••" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "inputs": { "date_range": "last_7_days", "team": "support" }
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.quantumflow.ai/v1/workflows/wf_01j9abc123/run",
+    headers={
+        "Authorization": "Bearer qf_live_••••••••••••••••",
+        "Content-Type": "application/json",
+    },
+    json={"inputs": {"date_range": "last_7_days", "team": "support"}},
+)
+task = response.json()
+print(task["task_id"])
+```
+
+```javascript JavaScript
+const response = await fetch(
+  "https://api.quantumflow.ai/v1/workflows/wf_01j9abc123/run",
+  {
+    method: "POST",
+    headers: {
+      "Authorization": "Bearer qf_live_••••••••••••••••",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      inputs: { date_range: "last_7_days", team: "support" },
+    }),
+  }
+);
+const { task_id } = await response.json();
+```
+
+</CodeGroup>
+
+```json Response 202
 {
   "task_id": "tsk_01j9xyz456",
   "workflow_id": "wf_01j9abc123",
@@ -95,7 +181,7 @@ Manually triggers a single execution of the workflow, regardless of its configur
 
 ## Retrieve a workflow
 
-<api-endpoint method="GET" path="/v1/workflows/{id}" />
+`GET /v1/workflows/{id}`
 
 Returns the full definition of a workflow, including its configured steps.
 
@@ -139,11 +225,40 @@ Returns the full definition of a workflow, including its configured steps.
   ISO 8601 timestamp of when the workflow was last modified.
 </ResponseField>
 
+### Request and response example
+
+<CodeGroup>
+
+```bash curl
+curl https://api.quantumflow.ai/v1/workflows/wf_01j9abc123 \
+  -H "Authorization: Bearer qf_live_••••••••••••••••"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.quantumflow.ai/v1/workflows/wf_01j9abc123",
+    headers={"Authorization": "Bearer qf_live_••••••••••••••••"},
+)
+workflow = response.json()
+```
+
+```javascript JavaScript
+const response = await fetch(
+  "https://api.quantumflow.ai/v1/workflows/wf_01j9abc123",
+  { headers: { "Authorization": "Bearer qf_live_••••••••••••••••" } }
+);
+const workflow = await response.json();
+```
+
+</CodeGroup>
+
 ---
 
 ## Update a workflow
 
-<api-endpoint method="PATCH" path="/v1/workflows/{id}" />
+`PATCH /v1/workflows/{id}`
 
 Partially updates a workflow's configuration. You can modify the `name`, `description`, `trigger`, or `status`. Only the fields you include in the request body are changed.
 
@@ -151,6 +266,24 @@ Partially updates a workflow's configuration. You can modify the `name`, `descri
 
 <ParamField path="id" type="string" required>
   The unique identifier of the workflow to update.
+</ParamField>
+
+### Request body
+
+<ParamField body="name" type="string">
+  Updated display name for the workflow.
+</ParamField>
+
+<ParamField body="description" type="string">
+  Updated description for the workflow.
+</ParamField>
+
+<ParamField body="trigger" type="object">
+  Updated trigger configuration. Replaces the existing trigger configuration entirely.
+</ParamField>
+
+<ParamField body="status" type="string">
+  Updated lifecycle status. See the status transition table below for permitted transitions.
 </ParamField>
 
 ### Workflow status transitions
@@ -165,11 +298,43 @@ Partially updates a workflow's configuration. You can modify the `name`, `descri
 
 <CodeGroup>
 
-```json Request
-{
-  "status": "active"
-}
+```bash curl
+curl -X PATCH https://api.quantumflow.ai/v1/workflows/wf_01j9abc123 \
+  -H "Authorization: Bearer qf_live_••••••••••••••••" \
+  -H "Content-Type: application/json" \
+  -d '{ "status": "active" }'
 ```
+
+```python Python
+import requests
+
+response = requests.patch(
+    "https://api.quantumflow.ai/v1/workflows/wf_01j9abc123",
+    headers={
+        "Authorization": "Bearer qf_live_••••••••••••••••",
+        "Content-Type": "application/json",
+    },
+    json={"status": "active"},
+)
+workflow = response.json()
+```
+
+```javascript JavaScript
+const response = await fetch(
+  "https://api.quantumflow.ai/v1/workflows/wf_01j9abc123",
+  {
+    method: "PATCH",
+    headers: {
+      "Authorization": "Bearer qf_live_••••••••••••••••",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ status: "active" }),
+  }
+);
+const workflow = await response.json();
+```
+
+</CodeGroup>
 
 ```json Response 200
 {
@@ -180,13 +345,11 @@ Partially updates a workflow's configuration. You can modify the `name`, `descri
 }
 ```
 
-</CodeGroup>
-
 ---
 
 ## Delete a workflow
 
-<api-endpoint method="DELETE" path="/v1/workflows/{id}" />
+`DELETE /v1/workflows/{id}`
 
 Permanently deletes a workflow and all of its step configuration. Returns `204 No Content` on success.
 
@@ -200,11 +363,38 @@ Permanently deletes a workflow and all of its step configuration. Returns `204 N
 You must pause an active workflow before deleting it. Attempting to delete a workflow with `status: active` returns a `409 Conflict` error. Pause the workflow first with a `PATCH` request, then delete it. Note that deleting a workflow does not delete its historical Task records — those remain queryable via the Tasks API.
 </Warning>
 
+<CodeGroup>
+
+```bash curl
+curl -X DELETE https://api.quantumflow.ai/v1/workflows/wf_01j9abc123 \
+  -H "Authorization: Bearer qf_live_••••••••••••••••"
+```
+
+```python Python
+import requests
+
+requests.delete(
+    "https://api.quantumflow.ai/v1/workflows/wf_01j9abc123",
+    headers={"Authorization": "Bearer qf_live_••••••••••••••••"},
+)
+# Returns 204 No Content on success
+```
+
+```javascript JavaScript
+await fetch("https://api.quantumflow.ai/v1/workflows/wf_01j9abc123", {
+  method: "DELETE",
+  headers: { "Authorization": "Bearer qf_live_••••••••••••••••" },
+});
+// Returns 204 No Content on success
+```
+
+</CodeGroup>
+
 ---
 
 ## List workflows
 
-<api-endpoint method="GET" path="/v1/workflows" />
+`GET /v1/workflows`
 
 Returns a paginated list of all workflows in your workspace, ordered by creation date descending.
 
@@ -218,9 +408,39 @@ Returns a paginated list of all workflows in your workspace, ordered by creation
   Pagination cursor from the `next_cursor` field of the previous response. Omit on the first request.
 </ParamField>
 
-### Response example
+### Request and response example
 
-```json
+<CodeGroup>
+
+```bash curl
+curl "https://api.quantumflow.ai/v1/workflows?limit=20" \
+  -H "Authorization: Bearer qf_live_••••••••••••••••"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.quantumflow.ai/v1/workflows",
+    headers={"Authorization": "Bearer qf_live_••••••••••••••••"},
+    params={"limit": 20},
+)
+data = response.json()
+workflows = data["data"]
+next_cursor = data.get("next_cursor")
+```
+
+```javascript JavaScript
+const response = await fetch(
+  "https://api.quantumflow.ai/v1/workflows?limit=20",
+  { headers: { "Authorization": "Bearer qf_live_••••••••••••••••" } }
+);
+const { data: workflows, next_cursor } = await response.json();
+```
+
+</CodeGroup>
+
+```json Response 200
 {
   "data": [
     {

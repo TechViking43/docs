@@ -1,7 +1,7 @@
 ---
-title: "Tasks API — Monitor Workflow Execution Results"
+title: "Tasks API — Monitor and Cancel Workflow Executions"
 sidebarTitle: "Tasks"
-description: "Query QuantumFlow AI task status, retrieve execution logs, and access agent outputs using the Tasks API endpoints."
+description: "Use the QuantumFlow AI Tasks API to poll execution status, retrieve step-level results and agent outputs, and cancel in-progress workflow runs."
 ---
 
 A task represents a single execution of a workflow. Every time a workflow runs — whether triggered by a schedule, a webhook event, or a manual `/run` call — QuantumFlow creates a task record that captures the full execution history: the status at each step, any errors that occurred, timing data, and the final output produced by your agents. Use the Tasks API to poll for completion, build status dashboards, retrieve agent-generated outputs, or stream results into downstream systems.
@@ -10,7 +10,7 @@ A task represents a single execution of a workflow. Every time a workflow runs �
 
 ## Retrieve a task
 
-<api-endpoint method="GET" path="/v1/tasks/{id}" />
+`GET /v1/tasks/{id}`
 
 Returns the current state and full execution details of a single task.
 
@@ -36,6 +36,7 @@ Returns the current state and full execution details of a single task.
   - `running` — the task is actively executing.
   - `completed` — all steps finished successfully.
   - `failed` — one or more steps encountered an unrecoverable error.
+  - `cancelled` — the task was stopped via the cancel endpoint.
 </ResponseField>
 
 <ResponseField name="started_at" type="string">
@@ -43,7 +44,7 @@ Returns the current state and full execution details of a single task.
 </ResponseField>
 
 <ResponseField name="completed_at" type="string">
-  ISO 8601 timestamp of when the task reached a terminal state (`completed` or `failed`). `null` if still in progress.
+  ISO 8601 timestamp of when the task reached a terminal state (`completed`, `failed`, or `cancelled`). `null` if still in progress.
 </ResponseField>
 
 <ResponseField name="duration_ms" type="integer">
@@ -58,9 +59,38 @@ Returns the current state and full execution details of a single task.
   The final output of the workflow — typically the output of the last step or an aggregated result. The shape is determined by your workflow configuration.
 </ResponseField>
 
-### Response example
+### Request and response example
 
-```json
+<CodeGroup>
+
+```bash curl
+curl https://api.quantumflow.ai/v1/tasks/tsk_01j9xyz456 \
+  -H "Authorization: Bearer qf_live_••••••••••••••••"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.quantumflow.ai/v1/tasks/tsk_01j9xyz456",
+    headers={"Authorization": "Bearer qf_live_••••••••••••••••"},
+)
+task = response.json()
+print(task["status"])
+```
+
+```javascript JavaScript
+const response = await fetch(
+  "https://api.quantumflow.ai/v1/tasks/tsk_01j9xyz456",
+  { headers: { "Authorization": "Bearer qf_live_••••••••••••••••" } }
+);
+const task = await response.json();
+console.log(task.status);
+```
+
+</CodeGroup>
+
+```json Response 200
 {
   "id": "tsk_01j9xyz456",
   "workflow_id": "wf_01j9abc123",
@@ -98,7 +128,7 @@ Returns the current state and full execution details of a single task.
 
 ## List tasks
 
-<api-endpoint method="GET" path="/v1/tasks" />
+`GET /v1/tasks`
 
 Returns a paginated list of tasks across all workflows in your workspace, ordered by creation date descending. Use the filter parameters to narrow results by workflow, status, or time range.
 
@@ -109,7 +139,7 @@ Returns a paginated list of tasks across all workflows in your workspace, ordere
 </ParamField>
 
 <ParamField query="status" type="string">
-  Filter by task status. One of `queued`, `running`, `completed`, or `failed`.
+  Filter by task status. One of `queued`, `running`, `completed`, `failed`, or `cancelled`.
 </ParamField>
 
 <ParamField query="created_after" type="string">
@@ -128,9 +158,48 @@ Returns a paginated list of tasks across all workflows in your workspace, ordere
   Pagination cursor from the `next_cursor` field of a previous response. Omit on the first request.
 </ParamField>
 
-### Response example
+### Request and response example
 
-```json
+<CodeGroup>
+
+```bash curl
+curl "https://api.quantumflow.ai/v1/tasks?workflow_id=wf_01j9abc123&status=completed&limit=20" \
+  -H "Authorization: Bearer qf_live_••••••••••••••••"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.quantumflow.ai/v1/tasks",
+    headers={"Authorization": "Bearer qf_live_••••••••••••••••"},
+    params={
+        "workflow_id": "wf_01j9abc123",
+        "status": "completed",
+        "limit": 20,
+    },
+)
+data = response.json()
+tasks = data["data"]
+next_cursor = data.get("next_cursor")
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({
+  workflow_id: "wf_01j9abc123",
+  status: "completed",
+  limit: "20",
+});
+const response = await fetch(
+  `https://api.quantumflow.ai/v1/tasks?${params}`,
+  { headers: { "Authorization": "Bearer qf_live_••••••••••••••••" } }
+);
+const { data: tasks, next_cursor } = await response.json();
+```
+
+</CodeGroup>
+
+```json Response 200
 {
   "data": [
     {
@@ -150,9 +219,9 @@ Returns a paginated list of tasks across all workflows in your workspace, ordere
 
 ## Cancel a task
 
-<api-endpoint method="DELETE" path="/v1/tasks/{id}" />
+`DELETE /v1/tasks/{id}`
 
-Cancels a task that is currently `queued` or `running`. Returns `204 No Content` on success. If the task has already reached a terminal state (`completed` or `failed`), the API returns `409 Conflict` — no changes are made.
+Cancels a task that is currently `queued` or `running`. Returns `204 No Content` on success. If the task has already reached a terminal state (`completed`, `failed`, or `cancelled`), the API returns `409 Conflict` — no changes are made.
 
 ### Path parameters
 
@@ -163,3 +232,30 @@ Cancels a task that is currently `queued` or `running`. Returns `204 No Content`
 <Note>
 Cancelling a running task stops execution as soon as the currently active step finishes its in-flight API call. Steps that have already completed are not rolled back. Check the task's `steps` array after cancellation to see how far execution progressed before it was stopped.
 </Note>
+
+<CodeGroup>
+
+```bash curl
+curl -X DELETE https://api.quantumflow.ai/v1/tasks/tsk_01j9xyz456 \
+  -H "Authorization: Bearer qf_live_••••••••••••••••"
+```
+
+```python Python
+import requests
+
+requests.delete(
+    "https://api.quantumflow.ai/v1/tasks/tsk_01j9xyz456",
+    headers={"Authorization": "Bearer qf_live_••••••••••••••••"},
+)
+# Returns 204 No Content on success
+```
+
+```javascript JavaScript
+await fetch("https://api.quantumflow.ai/v1/tasks/tsk_01j9xyz456", {
+  method: "DELETE",
+  headers: { "Authorization": "Bearer qf_live_••••••••••••••••" },
+});
+// Returns 204 No Content on success
+```
+
+</CodeGroup>

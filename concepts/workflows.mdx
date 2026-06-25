@@ -11,13 +11,13 @@ Workflows let you string together triggers, AI agents, and actions into a single
 Every workflow is composed of three conceptual layers:
 
 <CardGroup cols={3}>
-  <Card title="Trigger" icon="bolt">
+  <Card title="Trigger" icon="bolt" href="/guides/create-first-workflow">
     The event or schedule that starts the workflow. A trigger fires once per run and passes any relevant input data — such as a webhook payload or a scheduled timestamp — into the first step.
   </Card>
-  <Card title="Steps" icon="sitemap">
+  <Card title="Steps" icon="sitemap" href="/guides/create-first-workflow">
     The ordered set of operations that run after the trigger. Steps can invoke AI agents, evaluate conditions, transform data, or call integrations directly. Steps can run sequentially or branch based on logic you define.
   </Card>
-  <Card title="Output" icon="arrow-right-from-bracket">
+  <Card title="Output" icon="arrow-right-from-bracket" href="/guides/create-first-workflow">
     What happens at the end of a successful run. Common outputs include sending a Slack message, writing a row to a Google Sheet, calling a webhook, or simply returning a JSON result to the system that triggered the workflow.
   </Card>
 </CardGroup>

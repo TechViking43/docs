@@ -1,5 +1,5 @@
 ---
-title: "Data Handling and Privacy in QuantumFlow AI"
+title: "Data Security, Privacy, and Compliance in QuantumFlow AI"
 sidebarTitle: "Data & Privacy"
 description: "Learn how QuantumFlow AI stores, processes, and protects your data, including retention policies, encryption standards, and compliance certifications."
 ---
@@ -22,7 +22,7 @@ QuantumFlow AI stores the following categories of data on your behalf:
 
 QuantumFlow AI encrypts your data at every layer:
 
-**At rest** — All data stored by QuantumFlow AI, including run logs, integration credentials, and agent configurations, is encrypted using AES-256. Encryption keys are managed by QuantumFlow AI's key management service and are rotated on a regular schedule. Integration credentials and secrets are stored using envelope encryption, adding an additional layer of protection.
+**At rest** — All data stored by QuantumFlow AI, including run logs, integration credentials, and agent configurations, is encrypted using AES-256. Encryption keys are rotated on a regular schedule. Integration credentials and secrets receive an additional layer of encryption beyond the baseline, so they are never stored alongside the keys used to access them.
 
 **In transit** — All communication between your browser or API client and QuantumFlow AI, and all communication between QuantumFlow AI and external integrations, uses TLS 1.2 or higher. Connections that do not meet this standard are rejected.
 

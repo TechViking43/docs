@@ -1,7 +1,7 @@
 ---
 title: "Webhooks API — Register and Manage Event Endpoints"
 sidebarTitle: "Webhooks"
-description: "Programmatically register, list, and remove outbound webhook endpoints using the QuantumFlow AI Webhooks API."
+description: "Use the QuantumFlow AI Webhooks API to register HTTPS endpoints, subscribe to platform events, and verify signed payloads with HMAC-SHA256."
 ---
 
 Webhooks let you receive real-time notifications from QuantumFlow AI in your own systems the moment a significant event occurs — such as a workflow completing, a workflow failing, or an agent escalating an output for human review. Instead of polling the Tasks API to detect state changes, you register an HTTPS endpoint and QuantumFlow delivers a signed HTTP POST payload to it automatically. Use the Webhooks API to manage these registrations in code, rotate signing secrets, and keep your event subscriptions in sync with your infrastructure.
@@ -10,7 +10,7 @@ Webhooks let you receive real-time notifications from QuantumFlow AI in your own
 
 ## List webhooks
 
-<api-endpoint method="GET" path="/v1/webhooks" />
+`GET /v1/webhooks`
 
 Returns all webhook endpoints currently registered in your workspace.
 
@@ -36,9 +36,35 @@ Returns all webhook endpoints currently registered in your workspace.
   ISO 8601 timestamp of when the webhook was registered.
 </ResponseField>
 
-### Response example
+### Request and response example
 
-```json
+<CodeGroup>
+
+```bash curl
+curl https://api.quantumflow.ai/v1/webhooks \
+  -H "Authorization: Bearer qf_live_••••••••••••••••"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.quantumflow.ai/v1/webhooks",
+    headers={"Authorization": "Bearer qf_live_••••••••••••••••"},
+)
+webhooks = response.json()["data"]
+```
+
+```javascript JavaScript
+const response = await fetch("https://api.quantumflow.ai/v1/webhooks", {
+  headers: { "Authorization": "Bearer qf_live_••••••••••••••••" },
+});
+const { data: webhooks } = await response.json();
+```
+
+</CodeGroup>
+
+```json Response 200
 {
   "data": [
     {
@@ -57,7 +83,7 @@ Returns all webhook endpoints currently registered in your workspace.
 
 ## Register a webhook
 
-<api-endpoint method="POST" path="/v1/webhooks" />
+`POST /v1/webhooks`
 
 Registers a new outbound webhook endpoint. QuantumFlow will immediately begin delivering matching events to the specified URL.
 
@@ -68,31 +94,72 @@ Registers a new outbound webhook endpoint. QuantumFlow will immediately begin de
 </ParamField>
 
 <ParamField body="events" type="array" required>
-  An array of event name strings this webhook should subscribe to. Supported events:
-
-  | Event name | Triggered when |
-  |------------|----------------|
-  | `workflow.completed` | A workflow run finishes successfully. |
-  | `workflow.failed` | A workflow run encounters an unrecoverable error. |
-  | `workflow.started` | A workflow run begins executing. |
-  | `agent.escalated` | An agent routes output to an escalation channel. |
-  | `task.cancelled` | A running task is cancelled via the Tasks API. |
+  An array of event name strings this webhook should subscribe to. See the events table below for all supported values.
 </ParamField>
 
 <ParamField body="secret" type="string">
   An optional signing secret used to generate an HMAC-SHA256 signature for every outbound payload. QuantumFlow includes the signature in the `X-QuantumFlow-Signature` request header so your endpoint can verify that payloads originate from QuantumFlow and have not been tampered with. If you omit this field, QuantumFlow generates a secret for you and returns it in the response as `signing_secret`.
 </ParamField>
 
+### Supported events
+
+| Event name | Triggered when |
+|------------|----------------|
+| `workflow.completed` | A workflow run finishes successfully. |
+| `workflow.failed` | A workflow run encounters an unrecoverable error. |
+| `workflow.started` | A workflow run begins executing. |
+| `agent.escalated` | An agent routes output to an escalation channel. |
+| `task.cancelled` | A running task is cancelled via the Tasks API. |
+
 ### Request and response example
 
 <CodeGroup>
 
-```json Request
-{
-  "url": "https://yourapp.com/hooks/quantumflow",
-  "events": ["workflow.completed", "workflow.failed", "agent.escalated"]
-}
+```bash curl
+curl -X POST https://api.quantumflow.ai/v1/webhooks \
+  -H "Authorization: Bearer qf_live_••••••••••••••••" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://yourapp.com/hooks/quantumflow",
+    "events": ["workflow.completed", "workflow.failed", "agent.escalated"]
+  }'
 ```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.quantumflow.ai/v1/webhooks",
+    headers={
+        "Authorization": "Bearer qf_live_••••••••••••••••",
+        "Content-Type": "application/json",
+    },
+    json={
+        "url": "https://yourapp.com/hooks/quantumflow",
+        "events": ["workflow.completed", "workflow.failed", "agent.escalated"],
+    },
+)
+webhook = response.json()
+# Store webhook["signing_secret"] securely — it won't be shown again
+```
+
+```javascript JavaScript
+const response = await fetch("https://api.quantumflow.ai/v1/webhooks", {
+  method: "POST",
+  headers: {
+    "Authorization": "Bearer qf_live_••••••••••••••••",
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    url: "https://yourapp.com/hooks/quantumflow",
+    events: ["workflow.completed", "workflow.failed", "agent.escalated"],
+  }),
+});
+const webhook = await response.json();
+// Store webhook.signing_secret securely — it won't be shown again
+```
+
+</CodeGroup>
 
 ```json Response 201
 {
@@ -105,17 +172,17 @@ Registers a new outbound webhook endpoint. QuantumFlow will immediately begin de
 }
 ```
 
-</CodeGroup>
-
 <Warning>
 The `signing_secret` is only returned in full at the time of registration. Store it securely in your secrets manager immediately — you cannot retrieve the plaintext value again after this response. If you lose the secret, delete the webhook and register a new one.
 </Warning>
 
 ### Verifying webhook signatures
 
-On each delivery, QuantumFlow sets the `X-QuantumFlow-Signature` header to `sha256=<hex-digest>`, computed as an HMAC-SHA256 of the raw request body using your signing secret. Verify the signature in your endpoint before processing the payload.
+On each delivery, QuantumFlow sets the `X-QuantumFlow-Signature` header to `sha256=<hex-digest>`, computed as an HMAC-SHA256 of the raw request body using your signing secret. Verify the signature in your endpoint before processing the payload to ensure it genuinely originated from QuantumFlow.
 
-```python
+<CodeGroup>
+
+```python Python
 import hmac
 import hashlib
 
@@ -126,11 +193,35 @@ def verify_signature(payload_body: bytes, secret: str, signature_header: str) ->
     return hmac.compare_digest(expected, signature_header)
 ```
 
+```javascript JavaScript
+const crypto = require("crypto");
+
+function verifySignature(payloadBody, secret, signatureHeader) {
+  const expectedSig =
+    "sha256=" +
+    crypto
+      .createHmac("sha256", secret)
+      .update(payloadBody)
+      .digest("hex");
+  // Use timingSafeEqual to prevent timing attacks
+  const expected = Buffer.from(expectedSig);
+  const received = Buffer.from(signatureHeader);
+  if (expected.length !== received.length) return false;
+  return crypto.timingSafeEqual(expected, received);
+}
+```
+
+</CodeGroup>
+
+<Note>
+Always verify the signature against the **raw** request body bytes before JSON parsing. Normalizing or re-serializing the body before hashing will produce a different digest and cause verification to fail.
+</Note>
+
 ---
 
 ## Retrieve a webhook
 
-<api-endpoint method="GET" path="/v1/webhooks/{id}" />
+`GET /v1/webhooks/{id}`
 
 Returns the details of a single registered webhook. The `signing_secret` field is not included in this response.
 
@@ -140,9 +231,36 @@ Returns the details of a single registered webhook. The `signing_secret` field i
   The unique identifier of the webhook to retrieve (e.g. `whk_01j9mno789`).
 </ParamField>
 
-### Response example
+### Request and response example
 
-```json
+<CodeGroup>
+
+```bash curl
+curl https://api.quantumflow.ai/v1/webhooks/whk_01j9mno789 \
+  -H "Authorization: Bearer qf_live_••••••••••••••••"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.quantumflow.ai/v1/webhooks/whk_01j9mno789",
+    headers={"Authorization": "Bearer qf_live_••••••••••••••••"},
+)
+webhook = response.json()
+```
+
+```javascript JavaScript
+const response = await fetch(
+  "https://api.quantumflow.ai/v1/webhooks/whk_01j9mno789",
+  { headers: { "Authorization": "Bearer qf_live_••••••••••••••••" } }
+);
+const webhook = await response.json();
+```
+
+</CodeGroup>
+
+```json Response 200
 {
   "id": "whk_01j9mno789",
   "url": "https://yourapp.com/hooks/quantumflow",
@@ -156,7 +274,7 @@ Returns the details of a single registered webhook. The `signing_secret` field i
 
 ## Delete a webhook
 
-<api-endpoint method="DELETE" path="/v1/webhooks/{id}" />
+`DELETE /v1/webhooks/{id}`
 
 Permanently removes a webhook registration. QuantumFlow stops delivering events to the associated URL immediately. Returns `204 No Content` on success.
 
@@ -169,3 +287,30 @@ Permanently removes a webhook registration. QuantumFlow stops delivering events 
 <Note>
 Deleting a webhook does not affect the events themselves — workflow runs and agent escalations continue to occur and are recorded in your Task history. Only the delivery of event payloads to the registered URL is stopped. To resume notifications, register a new webhook.
 </Note>
+
+<CodeGroup>
+
+```bash curl
+curl -X DELETE https://api.quantumflow.ai/v1/webhooks/whk_01j9mno789 \
+  -H "Authorization: Bearer qf_live_••••••••••••••••"
+```
+
+```python Python
+import requests
+
+requests.delete(
+    "https://api.quantumflow.ai/v1/webhooks/whk_01j9mno789",
+    headers={"Authorization": "Bearer qf_live_••••••••••••••••"},
+)
+# Returns 204 No Content on success
+```
+
+```javascript JavaScript
+await fetch("https://api.quantumflow.ai/v1/webhooks/whk_01j9mno789", {
+  method: "DELETE",
+  headers: { "Authorization": "Bearer qf_live_••••••••••••••••" },
+});
+// Returns 204 No Content on success
+```
+
+</CodeGroup>
