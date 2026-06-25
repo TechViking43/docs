@@ -1,0 +1,121 @@
+---
+title: "Managing API Keys for QuantumFlow AI Access"
+sidebarTitle: "API Keys"
+description: "Create, rotate, and revoke QuantumFlow AI API keys. Learn how to scope keys to specific resources and keep them secure in your applications."
+---
+
+API keys let you authenticate your applications, scripts, and integrations against the QuantumFlow AI REST API. Each key carries a specific permission scope, so you can grant only the access level a particular system needs. This guide covers creating, using, rotating, and revoking keys — and explains how to store them safely.
+
+## Creating an API Key
+
+<Steps>
+  <Step title="Open the API Keys Panel">
+    Go to **Dashboard → Settings → API Keys**.
+  </Step>
+  <Step title="Create a New Key">
+    Click **Create New Key** in the top-right corner.
+  </Step>
+  <Step title="Name the Key">
+    Give the key a descriptive name that identifies its purpose and owner, such as `Production Backend`, `CI Pipeline`, or `Data Export Script`. Clear names make it easier to audit and revoke keys later.
+  </Step>
+  <Step title="Choose a Permission Scope">
+    Select one of the available scopes: **Read-only**, **Read/Write**, or **Admin**. See the [Key Scopes](#key-scopes) section below to choose the right scope.
+  </Step>
+  <Step title="Set an Expiration Date (Optional)">
+    Optionally enter an expiration date. After this date the key is automatically invalidated. This is recommended for keys used in temporary scripts or short-lived integrations.
+  </Step>
+  <Step title="Copy the Key">
+    Click **Generate**. Copy the full key value immediately and store it somewhere secure — **QuantumFlow AI does not store the raw key value and cannot display it again**. If you lose it, you must rotate the key.
+  </Step>
+</Steps>
+
+<Warning>
+  Never commit API keys to version control. Once a key is pushed to a public or private repository, treat it as compromised and rotate it immediately.
+</Warning>
+
+---
+
+## Using Your API Key
+
+Pass your API key in the `Authorization` header of every request using the `Bearer` scheme:
+
+```bash
+Authorization: Bearer qf_live_abc123xyz...
+```
+
+**Example: List All Workflows**
+
+```bash
+curl https://api.quantumflow.ai/v1/workflows \
+  -H "Authorization: Bearer qf_live_abc123xyz..." \
+  -H "Content-Type: application/json"
+```
+
+The API responds with a paginated JSON array of your workspace's workflows. All API endpoints follow the same authentication pattern — no session cookies or separate login steps are required.
+
+---
+
+## Key Scopes
+
+Choose the narrowest scope that satisfies your use case. This limits the blast radius if a key is ever leaked.
+
+| Scope       | Accessible Endpoints                                             |
+|-------------|------------------------------------------------------------------|
+| Read-only   | All `GET` endpoints — list and retrieve workflows, agents, tasks, logs |
+| Read/Write  | All `GET` endpoints, plus `POST` and `PATCH` — create and update workflows, trigger runs, manage integrations |
+| Admin       | All endpoints, including team member management, billing operations, and API key administration |
+
+<Note>
+  Only workspace **Admins** can create Admin-scoped keys. Read/Write and Read-only keys can be created by any workspace member with the **Developer** role or higher.
+</Note>
+
+---
+
+## Rotating a Key
+
+Rotate a key whenever you suspect it has been exposed, when a team member who had access to it leaves, or as part of a regular security hygiene schedule.
+
+<Steps>
+  <Step title="Create a Replacement Key">
+    Follow the [Creating an API Key](#creating-an-api-key) steps to generate a new key with the same scope as the key you are replacing.
+  </Step>
+  <Step title="Update All Integrations">
+    Replace the old key value with the new key in every application, environment variable, CI/CD secret, and third-party integration that uses it. Verify each system is operating correctly with the new key before proceeding.
+  </Step>
+  <Step title="Revoke the Old Key">
+    Once all systems are updated and verified, revoke the old key as described in the next section.
+  </Step>
+</Steps>
+
+---
+
+## Revoking a Key
+
+Revoking a key is immediate and irreversible. Any request that uses the revoked key after revocation will receive a `401 Unauthorized` response.
+
+<Steps>
+  <Step title="Open the API Keys Panel">
+    Go to **Settings → API Keys**.
+  </Step>
+  <Step title="Find the Key">
+    Locate the key you want to revoke in the list. You can identify keys by their name and the last four characters of the key value that are displayed as a hint.
+  </Step>
+  <Step title="Revoke the Key">
+    Click **Revoke** next to the key and confirm the action in the dialog. The key is invalidated instantly.
+  </Step>
+</Steps>
+
+---
+
+## Storing Keys Securely
+
+<Tip>
+  Store your API key in an environment variable rather than hardcoding it in your source code. For local development, use a `.env` file (and add it to `.gitignore`):
+
+  ```bash
+  # .env
+  QUANTUMFLOW_API_KEY=qf_live_abc123xyz...
+  ```
+
+  Then load it in your application using a library like `dotenv` (Node.js), `python-dotenv` (Python), or your framework's built-in environment handling. For production deployments, use a dedicated secrets manager such as AWS Secrets Manager, HashiCorp Vault, or your CI/CD platform's secret store.
+</Tip>

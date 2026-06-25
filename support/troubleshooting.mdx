@@ -1,0 +1,112 @@
+---
+title: "Troubleshooting Common QuantumFlow AI Issues"
+sidebarTitle: "Troubleshooting"
+description: "Diagnose and fix the most common issues with QuantumFlow AI workflows, agent errors, integration failures, and API authentication problems."
+---
+
+Most issues with QuantumFlow AI fall into a small number of categories: a workflow that won't run, an agent producing unexpected output, an integration that has lost its connection, or an API call that keeps returning an error. This guide walks you through each scenario with concrete diagnostic steps and fixes.
+
+## Workflow Not Running
+
+If a workflow isn't triggering or executing as expected, work through the following checks in order:
+
+<Steps>
+  <Step title="Confirm the Workflow is Active">
+    Open the workflow in the editor and check the toggle in the top-right corner. A workflow must be in the **Active** state for scheduled and event-based triggers to fire. If it's toggled off, enable it and wait for the next trigger event.
+  </Step>
+  <Step title="Verify the Trigger Configuration">
+    Go to the workflow's **Trigger** step and confirm that the trigger type, schedule expression, or event source is configured correctly. For scheduled workflows, make sure the workspace timezone in **Settings → Workspace → General** matches your expectations. For webhook triggers, confirm the source system is sending requests to the correct URL.
+  </Step>
+  <Step title="Check Your Execution Credit Balance">
+    Go to **Settings → Billing → Usage** and verify that your workspace has remaining execution credits. When a workspace runs out of credits, all workflows are paused automatically and will not run until the balance resets or you purchase a top-up.
+  </Step>
+  <Step title="Inspect the Task Log for Recent Errors">
+    Open the workflow and click the **Run History** tab. If recent runs are present but failing immediately, click into the most recent run to see which step errored and what the error message was. This often reveals a misconfigured step, a changed input format, or a downstream API error.
+  </Step>
+</Steps>
+
+---
+
+## Agent Returning Wrong Results
+
+If an AI agent is producing outputs that are inaccurate, off-topic, or inconsistent, the following adjustments usually resolve the issue:
+
+**Refine the Agent's Instructions**
+The quality of an agent's output is directly tied to the clarity of its instructions. Open the agent's configuration, review the system prompt, and make the following more specific: the agent's goal, the format of the expected output, what to do when information is missing, and what the agent should _not_ do. Vague instructions produce vague results.
+
+**Verify the AI Model Selection**
+Different models have different strengths. If your agent is performing a complex multi-step reasoning task, switch to a more capable model such as **GPT-4o** or **Claude 3.5 Sonnet** in the agent's settings. If speed and volume are the priority and quality is sufficient, **GPT-4o mini** is a better fit. The active model is shown on the agent card in the editor.
+
+**Check the Integration Data the Agent Is Reading**
+If the agent reads data from a connected integration (such as a CRM, spreadsheet, or ticketing system), verify that the data being fetched is what you expect. Add a **Log** step before the agent step in your workflow to print the raw input data to the task log. Agents that receive malformed, empty, or stale data will produce poor outputs regardless of how well-written their instructions are.
+
+---
+
+## Integration Connection Failed
+
+OAuth integrations and API-key-based integrations can both lose their connection over time — for example, when a user revokes access, a token expires, or an API key is rotated.
+
+<Steps>
+  <Step title="Revoke and Reconnect the Integration">
+    Go to **Settings → Integrations**, find the affected integration, and click **Reconnect**. This revokes the existing credentials and starts a fresh OAuth flow or prompts you to enter a new API key. Complete the authorization and then re-test the connection.
+  </Step>
+  <Step title="Check OAuth App Scopes">
+    For OAuth integrations, verify that the third-party application still has the required permission scopes. For example, if your Salesforce integration needs to write records but the OAuth app was updated to read-only, QuantumFlow AI will receive permission errors. Log into the third-party service, review the app's OAuth permissions, and update them as needed before reconnecting.
+  </Step>
+  <Step title="Verify API Key Validity">
+    For API-key-based integrations, confirm that the key has not expired and has not been revoked in the third-party service. Generate a new key in the third-party service's dashboard, then update the integration in QuantumFlow AI under **Settings → Integrations → [Integration Name] → Edit Credentials**.
+  </Step>
+</Steps>
+
+---
+
+## API Authentication Errors
+
+If your API calls are returning authentication or authorization errors, use the table below to identify the cause and fix:
+
+| HTTP Status         | Error                  | Cause                                                           | Fix                                                                                          |
+|---------------------|------------------------|-----------------------------------------------------------------|----------------------------------------------------------------------------------------------|
+| `401 Unauthorized`  | Invalid API key        | The `Authorization` header is missing, malformed, or the key has been revoked. | Verify the header is formatted as `Bearer qf_live_...` with no extra spaces or line breaks. Check that the key has not been revoked in **Settings → API Keys**. |
+| `403 Forbidden`     | Insufficient scope     | The API key is valid but does not have permission to perform the requested operation. | Use an **Admin**-scoped key for team management and billing endpoints, or a **Read/Write**-scoped key for create/update operations. See [Key Scopes](/configuration/api-keys#key-scopes). |
+| `429 Too Many Requests` | Rate limit exceeded | Your application is sending too many requests in a short window. | Implement exponential backoff with jitter in your retry logic. Check the `Retry-After` response header for the number of seconds to wait before retrying. For rate limit details, see the [Rate Limits reference](/api-reference/rate-limits). |
+
+---
+
+## Webhook Delivery Failing
+
+If your webhook endpoint is not receiving events, or events are being delivered but marked as failed, work through these checks:
+
+**Confirm Your Endpoint Returns 200 Within 10 Seconds**
+QuantumFlow AI marks a delivery as failed if your server does not respond with an HTTP `2xx` status within 10 seconds. If your handler performs slow operations (database writes, external API calls), return `200` immediately and process the payload asynchronously in a background job or queue.
+
+**Verify Your HMAC Signature Logic**
+If you're rejecting deliveries due to signature verification failures, confirm the following: you are reading the raw request body bytes (not a parsed JSON object) when computing the HMAC, you are using the correct signing secret for that specific webhook (each webhook has its own secret), and you are using a constant-time comparison function. Refer to the signature verification code examples in the [Webhooks documentation](/configuration/webhooks#verifying-webhook-signatures).
+
+**Review the Delivery Log**
+Go to **Settings → Webhooks**, click on the affected webhook, and open the **Delivery Log**. Each entry shows the full request payload, the response status your server returned, any response body, and the timestamp. This is the fastest way to identify whether the problem is on the QuantumFlow AI side (payload not sent) or your server side (payload sent but rejected).
+
+---
+
+## Missing Task Logs
+
+If you cannot find execution logs for older workflow runs, the most likely cause is that those logs have been purged according to your workspace's data retention policy.
+
+By default, QuantumFlow AI retains logs for **90 days**. Logs older than your retention period are permanently deleted and cannot be recovered.
+
+To preserve logs for longer:
+- Upgrade to the **Growth** or **Enterprise** plan, which support adjustable retention periods.
+- Increase your retention period under **Settings → Workspace → Data Retention**.
+
+If logs for recent runs are missing unexpectedly, contact [support@quantumflow.ai](mailto:support@quantumflow.ai) with your workspace ID and the affected workflow ID.
+
+---
+
+## Getting More Help
+
+<Info>
+  If the steps above don't resolve your issue, the QuantumFlow AI support team is here to help.
+
+  - **Email support:** [support@quantumflow.ai](mailto:support@quantumflow.ai) — we respond to all inquiries within one business day. Include your workspace ID, a description of the issue, and any relevant error messages or screenshots.
+  - **Community forum:** Visit the [QuantumFlow AI Community](https://community.quantumflow.ai) to search existing threads, ask questions, and share solutions with other users.
+  - **Enterprise customers:** Your dedicated Slack channel connects you directly to your account team and a solutions engineer for faster resolution of critical issues.
+</Info>

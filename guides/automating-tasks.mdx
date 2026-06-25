@@ -1,0 +1,144 @@
+---
+title: "Automate Recurring Business Tasks with QuantumFlow"
+sidebarTitle: "Automating Tasks"
+description: "Use QuantumFlow AI schedules, webhook triggers, and conditional logic to automate daily reports, alerts, data syncs, and other recurring business tasks."
+---
+
+A workflow you have to run manually is still a chore. The real value of QuantumFlow emerges when your workflows run themselves — on a schedule, in response to external events, or triggered by conditions inside your data. This guide covers the three primary automation mechanisms: scheduled triggers, webhook triggers, and conditional branching logic, along with how to monitor everything that runs.
+
+## Scheduling a Recurring Workflow
+
+Schedule triggers let you run a workflow automatically at any cadence — hourly, daily, weekly, or any custom interval expressed as a cron expression.
+
+<Steps>
+  <Step title="Open your workflow's trigger settings">
+    From **Workflows**, click the workflow you want to schedule. In the canvas, click the **Trigger** block to open its configuration panel on the right.
+  </Step>
+
+  <Step title="Select the Schedule trigger">
+    In the Trigger Type dropdown, choose **Schedule**. The panel expands to show scheduling options.
+  </Step>
+
+  <Step title="Set the schedule">
+    You have two options:
+
+    - **Visual Scheduler** — choose frequency (hourly, daily, weekly, monthly), day, and time using dropdowns. No cron knowledge required.
+    - **Cron Expression** — toggle to *Advanced* and type a cron expression directly for precise control.
+
+    Use the table below for common patterns:
+
+    | Schedule | Cron Expression |
+    |----------|----------------|
+    | Every weekday at 9 am | `0 9 * * 1-5` |
+    | Every Monday at 8 am | `0 8 * * 1` |
+    | Every hour (on the hour) | `0 * * * *` |
+    | Every 15 minutes | `*/15 * * * *` |
+    | First day of every month at midnight | `0 0 1 * *` |
+
+    All schedules run in UTC by default. Select your timezone from the **Timezone** dropdown if you need local-time execution.
+  </Step>
+
+  <Step title="Save and activate the workflow">
+    Click **Save**, then toggle the workflow status from **Draft** to **Active** using the switch in the top-right corner. The workflow will now execute automatically on your defined schedule.
+  </Step>
+</Steps>
+
+## Triggering via Webhook
+
+Webhook triggers let any external system — a CRM, a support tool, a CI pipeline, or a custom script — fire your QuantumFlow workflow by sending an HTTP POST request. This is ideal for event-driven automation where you want to react to something that just happened.
+
+<Steps>
+  <Step title="Select the Webhook trigger">
+    Open the workflow, click the **Trigger** block, and choose **Webhook** from the Trigger Type dropdown.
+  </Step>
+
+  <Step title="Copy your webhook URL">
+    QuantumFlow generates a unique webhook URL for this workflow. It looks like:
+
+    ```
+    https://hooks.quantumflow.ai/v1/wh/wf_01j9abc123xyz
+    ```
+
+    Copy this URL. Treat it like a secret — anyone with the URL can trigger your workflow.
+  </Step>
+
+  <Step title="Send a POST request from your external system">
+    Configure your external system to POST a JSON payload to the webhook URL when the triggering event occurs. Here's an example using `curl`:
+
+    ```bash
+    curl -X POST https://hooks.quantumflow.ai/v1/wh/wf_01j9abc123xyz \
+      -H "Content-Type: application/json" \
+      -d '{
+        "event": "ticket.created",
+        "ticket_id": "TKT-5091",
+        "severity": "critical",
+        "subject": "Payment processing failure",
+        "reporter_email": "ops@customer.com"
+      }'
+    ```
+
+    QuantumFlow accepts any valid JSON payload. The fields you send become available as variables (e.g., `{{trigger.ticket_id}}`) in every downstream step of the workflow.
+
+    A successful delivery returns an HTTP `200` response:
+
+    ```json
+    {
+      "task_id": "tsk_01j9xyz",
+      "status": "queued"
+    }
+    ```
+
+    Use the `task_id` to look up the execution in the Task Log or poll its status via the [Workflows API](/api-reference/workflows).
+  </Step>
+</Steps>
+
+## Using Conditional Logic
+
+Conditional logic (if/else branching) lets a single workflow handle multiple scenarios by routing execution down different paths based on data values. You add conditional steps from the same **+** menu used for any other step — choose **Condition**.
+
+**Example — Ticket Severity Router:**
+
+Imagine your workflow receives a webhook whenever a new support ticket is created. You want different actions depending on the ticket's severity:
+
+```
+IF trigger.severity == "critical"
+  → Page the on-call engineer via PagerDuty
+  → Post an urgent message to #incidents in Slack
+
+ELSE
+  → Summarize the ticket using an AI Agent Step
+  → Post the summary to #support-digest in Slack
+```
+
+To build this in QuantumFlow:
+
+1. After the Webhook trigger, click **+** and add a **Condition** step.
+2. Set the condition: **Field** = `trigger.severity`, **Operator** = `equals`, **Value** = `critical`.
+3. Drag the PagerDuty and Slack-urgent steps onto the **True** (green) branch.
+4. Drag the AI Agent and Slack-summary steps onto the **False** (grey) branch.
+5. Save the workflow. Incoming webhooks will now be routed automatically.
+
+You can nest conditions, combine them with `AND`/`OR` logic, and chain multiple branches to handle as many scenarios as your process requires.
+
+## Monitoring Automated Tasks
+
+Every workflow execution — whether triggered by schedule, webhook, or manual run — creates a **Task** entry in your dashboard. You can view all tasks under **Workflows → Task Logs**.
+
+Each task record includes:
+
+| Field | Description |
+|-------|-------------|
+| **Status** | `queued` → `running` → `completed` or `failed` |
+| **Trigger** | What initiated the run (schedule, webhook, manual) |
+| **Duration** | Total elapsed time from queue to completion |
+| **Inputs** | The payload or context the workflow received at trigger time |
+| **Outputs** | The final result produced by the last step |
+| **Step Trace** | An expandable log of every individual step, its inputs, outputs, and duration |
+
+Click any failed task to see the exact error message and the step where execution stopped. Most failures are caused by expired integration credentials, malformed input data, or an agent hitting a rate limit — the log will indicate which.
+
+You can also set up **failure alerts** at the workflow level: go to the workflow's **Settings** tab, enable **Notify on failure**, and choose a Slack channel or email address to alert when any execution does not complete successfully.
+
+<Warning>
+**Watch your execution credits.** Setting a workflow to **Active** means it will execute automatically according to its trigger configuration — and every execution consumes credits from your plan. Before activating a high-frequency schedule (e.g., every 15 minutes), review your plan limits and projected usage in [Billing Settings](/configuration/billing) to avoid unexpected overages.
+</Warning>

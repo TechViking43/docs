@@ -1,0 +1,145 @@
+---
+title: "Account and Workspace Settings in QuantumFlow AI"
+sidebarTitle: "Account Settings"
+description: "Configure your QuantumFlow AI workspace: update your profile, set notification preferences, manage team members, and customize your workspace branding."
+---
+
+Your account and workspace settings control everything from how you log in to how your team's workflows are organized and scheduled. This guide walks you through each settings area so you can keep your workspace secure, properly configured, and tailored to your team's needs.
+
+## Profile Settings
+
+Your profile settings are personal to you and do not affect other members of your workspace. Access them by navigating to **Settings → Profile**.
+
+**Name and Email**
+Update your display name and email address at any time. If you change your email, QuantumFlow AI sends a confirmation link to the new address before the change takes effect.
+
+**Password**
+Click **Change Password** to update your password. You must enter your current password before setting a new one. Passwords must be at least 12 characters and include a mix of letters, numbers, and symbols.
+
+**Multi-Factor Authentication (MFA)**
+QuantumFlow AI supports TOTP-based MFA using any authenticator app (such as Google Authenticator, Authy, or 1Password).
+
+<Steps>
+  <Step title="Open MFA Settings">
+    Go to **Settings → Profile → Security** and click **Enable MFA**.
+  </Step>
+  <Step title="Scan the QR Code">
+    Open your authenticator app and scan the QR code displayed on screen.
+  </Step>
+  <Step title="Confirm the Code">
+    Enter the 6-digit code from your authenticator app to confirm the setup.
+  </Step>
+  <Step title="Save Recovery Codes">
+    Download or copy your one-time recovery codes and store them somewhere safe. These are the only way to recover your account if you lose access to your authenticator app.
+  </Step>
+</Steps>
+
+<Warning>
+  Recovery codes can each be used only once. Treat them like passwords and store them securely offline.
+</Warning>
+
+---
+
+## Workspace Settings
+
+Workspace settings apply to all members of your workspace. Only workspace **Admins** can modify these settings. Find them under **Settings → Workspace → General**.
+
+**Workspace Name**
+The display name shown throughout the dashboard and in notification emails. Update it at any time without side effects.
+
+**Workspace Slug**
+The slug is a short, URL-safe identifier used in API calls and webhook URLs (e.g., `https://app.quantumflow.ai/acme-corp/...`). It defaults to a slugified version of your workspace name.
+
+<Note>
+  Changing your workspace slug immediately breaks all existing webhook URLs and any hardcoded API paths that reference the old slug. Update all external systems, integrations, and webhook endpoints **before** saving a new slug.
+</Note>
+
+**Timezone**
+The workspace timezone controls when scheduled workflow triggers fire. For example, a workflow scheduled for `09:00 daily` runs at 9:00 AM in whichever timezone is selected here. Set this to the timezone where most of your team operates to avoid confusion.
+
+**Default AI Model**
+Choose the AI model that new agents and workflows use by default. Individual workflows and agents can override this setting. Available models include GPT-4o, Claude 3.5 Sonnet, and GPT-4o mini. Enterprise plans may also configure custom or self-hosted models.
+
+---
+
+## Notifications
+
+QuantumFlow AI can notify you by **email** and **Slack** when important events occur. Configure your preferences under **Settings → Notifications**.
+
+| Notification Type       | Email | Slack |
+|-------------------------|-------|-------|
+| Task failure            | ✓     | ✓     |
+| Workflow completion     | ✓     | ✓     |
+| Agent escalation        | ✓     | ✓     |
+| Billing alerts          | ✓     | —     |
+| Credit threshold alerts | ✓     | ✓     |
+
+**Setting Up Email Notifications**
+Email notifications are sent to your profile email address by default. Toggle individual event types on or off from the **Settings → Notifications → Email** panel.
+
+**Setting Up Slack Notifications**
+To enable Slack notifications:
+
+<Steps>
+  <Step title="Connect Slack">
+    Go to **Settings → Notifications → Slack** and click **Connect Slack Workspace**.
+  </Step>
+  <Step title="Authorize the App">
+    Complete the OAuth flow in Slack to grant QuantumFlow AI permission to post messages.
+  </Step>
+  <Step title="Choose a Channel">
+    Select the Slack channel where notifications should be posted (e.g., `#quantumflow-alerts`).
+  </Step>
+  <Step title="Choose Events">
+    Toggle which event types should appear in Slack.
+  </Step>
+</Steps>
+
+---
+
+## Data Retention
+
+By default, QuantumFlow AI retains workflow execution logs, task outputs, and agent traces for **90 days**. After this period, records are permanently purged and cannot be recovered.
+
+<Note>
+  Adjustable data retention periods are available on the **Growth** and **Enterprise** plans. Starter plan workspaces are fixed at 90 days.
+</Note>
+
+To change your retention period:
+
+<Steps>
+  <Step title="Open Retention Settings">
+    Go to **Settings → Workspace → Data Retention**.
+  </Step>
+  <Step title="Set the Retention Period">
+    Choose a retention period between 30 days and 365 days (Growth) or a custom period (Enterprise).
+  </Step>
+  <Step title="Save Changes">
+    Click **Save**. The new period applies to all new log records going forward. Existing records that have already passed the old retention threshold are not retroactively restored.
+  </Step>
+</Steps>
+
+---
+
+## Deleting Your Account
+
+Deleting your account is permanent and cannot be undone. All workflows, agents, integrations, API keys, and execution history associated with your workspace will be removed.
+
+<Steps>
+  <Step title="Export Your Data (Optional)">
+    Before proceeding, export any data you want to keep from **Settings → Workspace → Export Data**.
+  </Step>
+  <Step title="Navigate to Danger Zone">
+    Go to **Settings → Profile → Danger Zone** and click **Request Account Deletion**.
+  </Step>
+  <Step title="Confirm Your Identity">
+    Enter your password and type `DELETE` in the confirmation field.
+  </Step>
+  <Step title="Submit the Request">
+    Click **Submit Deletion Request**. You will receive a confirmation email.
+  </Step>
+</Steps>
+
+<Warning>
+  All workspace data — including workflows, agents, logs, and connected integrations — is permanently purged within **30 days** of your deletion request. This action cannot be reversed. If you are on an Enterprise plan, contact your account manager before submitting the request.
+</Warning>

@@ -1,0 +1,51 @@
+---
+title: "Authenticate Requests to the QuantumFlow AI API"
+sidebarTitle: "Authentication"
+description: "Pass your QuantumFlow AI API key in the Authorization header as a Bearer token to authenticate every API request you make."
+---
+
+Every request you make to the QuantumFlow AI API must be authenticated with an API key. QuantumFlow uses the standard HTTP Bearer token scheme — you include your key in the `Authorization` header, and the API validates it before processing your request. No cookies, no sessions, no OAuth flows are required for server-to-server calls.
+
+## Bearer Token
+
+Attach your API key to every request by setting the `Authorization` header to `Bearer <your-key>`. Requests that omit this header or supply an invalid key are rejected immediately with a `401` status code.
+
+```bash
+curl https://api.quantumflow.ai/v1/agents \
+  -H "Authorization: Bearer qf_live_••••••••••••••••" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json"
+```
+
+API keys are prefixed with `qf_live_` for production keys and `qf_test_` for test-mode keys. Test-mode keys execute requests against an isolated environment and never affect live data or trigger real third-party actions.
+
+## Getting Your API Key
+
+Follow these steps to obtain your API key from the QuantumFlow dashboard:
+
+1. Sign in to your QuantumFlow account at [app.quantumflow.ai](https://app.quantumflow.ai).
+2. Navigate to **Settings → API Keys**.
+3. Click **Create new key**, give it a descriptive name (e.g. `production-backend`), and select the scopes your integration needs.
+4. Copy the key immediately — it is only shown once in full at the moment of creation.
+
+Visit the [API Keys configuration page](/configuration/api-keys) for full details on creating, scoping, and managing your keys.
+
+## Authentication Errors
+
+The table below lists the authentication-related error responses you may encounter and what each one means.
+
+| HTTP Status | Error Code | Cause |
+|-------------|------------|-------|
+| `401` | `unauthorized` | The `Authorization` header is missing or the token is malformed (e.g. not a valid Bearer token). |
+| `401` | `key_revoked` | The API key has been revoked. Generate a new key in the dashboard. |
+| `403` | `insufficient_scope` | The API key is valid but does not have the required scope for this endpoint. Update the key's permissions or create a new key with the correct scopes. |
+
+<Warning>
+Never embed your API key in frontend JavaScript, mobile app source code, or any client-side environment. Doing so exposes it to anyone who inspects your app's network traffic or source bundle. Always make QuantumFlow API calls from a server-side environment where the key is stored in an environment variable or secret manager.
+</Warning>
+
+## Key Rotation
+
+You can rotate API keys at any time with zero downtime by following a blue-green pattern: create a new key first, deploy your updated application configuration pointing to the new key, confirm requests are succeeding, and then revoke the old key. Because both keys are valid simultaneously during the transition window, no requests are dropped.
+
+Visit the [API Keys configuration page](/configuration/api-keys) for step-by-step rotation instructions and guidance on setting key expiry policies.

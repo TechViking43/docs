@@ -1,0 +1,84 @@
+---
+title: "Integrations: Connecting QuantumFlow AI to Your Stack"
+sidebarTitle: "Integrations"
+description: "QuantumFlow AI integrations let your agents and workflows read from and write to the tools your business already uses, from Slack to Salesforce."
+---
+
+Integrations are the bridges between QuantumFlow AI and the rest of your software stack. When you connect an integration, you give your agents and workflows permission to call that tool's API on your behalf — reading data, creating records, sending messages, or triggering actions in external systems. Every action an agent takes in an external tool flows through a connected integration, so the integrations you enable define the real-world impact your automation can have.
+
+## Available Integrations
+
+QuantumFlow AI supports a growing library of pre-built integrations organized into the following categories:
+
+| Category | Examples |
+|---|---|
+| **Communication** | Slack, Microsoft Teams, Gmail, Outlook |
+| **CRM & Sales** | Salesforce, HubSpot, Pipedrive |
+| **Productivity** | Google Workspace (Docs, Drive, Calendar), Notion, Airtable |
+| **Developer Tools** | GitHub, Jira, Linear |
+| **Data & Analytics** | Google Sheets, BigQuery, Snowflake |
+| **Custom** | Any HTTP API via webhook or custom integration config |
+
+If the tool you need is not in the list above, you can connect it using a custom HTTP integration — see [Custom HTTP Integrations](#custom-http-integrations) below.
+
+## Connecting an Integration
+
+<Steps>
+  <Step title="Open the Integrations settings">
+    In the QuantumFlow AI dashboard, navigate to **Settings → Integrations**. You will see a searchable list of all available integrations alongside the status of any you have already connected.
+  </Step>
+  <Step title="Select and connect the integration">
+    Find the integration you want and click **Connect**. A configuration panel will open with the authentication method for that service.
+  </Step>
+  <Step title="Authorize access">
+    Depending on the integration, you will either complete an OAuth flow — which redirects you to the provider's login screen to grant permission — or enter an API key or credential directly into the configuration panel. QuantumFlow AI encrypts all credentials at rest immediately upon saving.
+  </Step>
+  <Step title="Grant access to agents and workflows">
+    After connecting, assign the integration to the specific agents or workflows that need it. Navigate to the agent or workflow configuration, open the **Tools & Integrations** section, and toggle on the integration. An agent or workflow can only call integrations that have been explicitly assigned to it.
+  </Step>
+</Steps>
+
+## Integration Permissions
+
+Each integration exposes a set of permission scopes that control which actions QuantumFlow AI can perform on your behalf. For example, a Slack integration might offer separate scopes for reading messages, posting messages, and managing channels.
+
+When you connect an integration, you choose which scopes to grant. You can apply the principle of least privilege by granting only the scopes your agents and workflows actually need. You can review and adjust scopes at any time from **Settings → Integrations → [Integration Name] → Permissions**.
+
+<Warning>
+  Revoking an integration while a workflow is actively running may cause that run to fail mid-execution. Before revoking, navigate to **Workflows → Runs** and confirm there are no active runs that depend on the integration. Pause any affected workflows first if you need to revoke access immediately.
+</Warning>
+
+## Custom HTTP Integrations
+
+If a service is not in the QuantumFlow AI integration library, you can define a custom HTTP integration using a JSON configuration. This lets any agent or workflow make authenticated requests to any REST API.
+
+A minimal custom integration configuration looks like this:
+
+```json
+{
+  "name": "my-internal-api",
+  "base_url": "https://api.example.com/v1",
+  "auth": {
+    "type": "bearer",
+    "token": "{{secret.MY_API_TOKEN}}"
+  },
+  "endpoints": [
+    {
+      "id": "get_order",
+      "method": "GET",
+      "path": "/orders/{{order_id}}",
+      "description": "Fetch a single order by ID."
+    },
+    {
+      "id": "create_order",
+      "method": "POST",
+      "path": "/orders",
+      "description": "Create a new order. Expects a JSON body."
+    }
+  ]
+}
+```
+
+Reference secrets by name using the `{{secret.SECRET_NAME}}` syntax. Store the actual values under **Settings → Secrets** — they are encrypted at rest and never exposed in logs or workflow run history. Once you save a custom integration, it appears alongside your other integrations and can be assigned to agents and workflows the same way.
+
+For a full tutorial on connecting your first integration, see the [Connect Integrations guide](/guides/connect-integrations).

@@ -1,0 +1,97 @@
+---
+title: "Frequently Asked Questions About QuantumFlow AI"
+sidebarTitle: "FAQ"
+description: "Answers to the most common questions about QuantumFlow AI features, pricing, data privacy, integrations, and how AI agents work."
+---
+
+Below you'll find answers to the questions our users ask most often. If you don't see what you're looking for here, reach out to [support@quantumflow.ai](mailto:support@quantumflow.ai) or visit the community forum — we're happy to help.
+
+<AccordionGroup>
+
+  <Accordion title="What is QuantumFlow AI?">
+    QuantumFlow AI is an AI agency platform that lets you build, deploy, and manage intelligent automation at scale. With QuantumFlow AI you can design multi-step workflows using a visual builder, configure autonomous AI agents that make decisions and act on your behalf, and connect to dozens of third-party tools and data sources — all without managing your own AI infrastructure. Whether you need to automate customer support, streamline internal operations, or build custom AI-powered products, QuantumFlow AI gives you the building blocks to do it quickly.
+  </Accordion>
+
+  <Accordion title="How do execution credits work?">
+    Execution credits are the unit of measurement for AI work on QuantumFlow AI. Each workflow step that runs consumes one credit, and each LLM call made by an AI agent consumes one credit. Your monthly plan includes a set number of credits that reset at the start of every billing cycle. If you exhaust your allocation early, all active workflows pause until your balance resets — or you can purchase a top-up immediately. For a full breakdown of how credits are consumed and how to monitor your usage, see the [Billing documentation](/configuration/billing).
+  </Accordion>
+
+  <Accordion title="Which AI models can I use?">
+    QuantumFlow AI supports the following models out of the box:
+
+    - **GPT-4o** — OpenAI's most capable multimodal model, best for complex reasoning and long-context tasks.
+    - **GPT-4o mini** — A faster, more cost-efficient OpenAI model, well-suited for high-volume tasks where speed matters.
+    - **Claude 3.5 Sonnet** — Anthropic's model, particularly strong for nuanced writing, analysis, and instruction-following.
+
+    You can set a default model for your entire workspace in **Settings → Workspace → General**, and override it per-workflow or per-agent in the respective editors.
+
+    **Enterprise** plan workspaces can also configure custom or self-hosted models, including fine-tuned variants and models deployed on your own cloud infrastructure. Contact [sales@quantumflow.ai](mailto:sales@quantumflow.ai) to set this up.
+  </Accordion>
+
+  <Accordion title="Is my data used to train AI models?">
+    **No — never.** Your data, workflows, agent interactions, and outputs are never used to train, fine-tune, or evaluate any AI model, including the models you use through QuantumFlow AI. Your data is yours. We process it solely to execute the automations you configure, and we do not share it with AI model providers for training purposes. For full details, see our Privacy Policy.
+  </Accordion>
+
+  <Accordion title="What integrations are available?">
+    QuantumFlow AI offers pre-built integrations across a wide range of categories:
+
+    - **Communication** — Slack, Microsoft Teams, Gmail, Outlook
+    - **CRM & Sales** — Salesforce, HubSpot, Pipedrive
+    - **Project Management** — Jira, Asana, Linear, Notion
+    - **Data & Analytics** — Google Sheets, Airtable, Snowflake, BigQuery
+    - **Cloud Storage** — Google Drive, Dropbox, AWS S3
+    - **Developer Tools** — GitHub, GitLab, PagerDuty
+    - **E-commerce** — Shopify, Stripe
+    - **Custom** — Any service with a REST API can be connected using the HTTP integration
+
+    For the full list and setup guides, see the [Integrations documentation](/concepts/integrations).
+  </Accordion>
+
+  <Accordion title="Can I use QuantumFlow AI without coding?">
+    Yes. The QuantumFlow AI **visual workflow builder** is a drag-and-drop editor that requires no code. You can build, configure, and deploy complete multi-step workflows entirely through the UI — connecting integrations, setting conditions, configuring AI agents, and mapping data between steps using point-and-click controls. Coding is optional: if you need custom logic, you can add JavaScript or Python steps anywhere in a workflow. But for the vast majority of use cases, no code is needed at all.
+  </Accordion>
+
+  <Accordion title="How do I add teammates to my workspace?">
+    You can invite teammates directly from the dashboard. Go to **Settings → Team → Invite Member**, enter their email address, and choose a role (Viewer, Member, Developer, or Admin). They'll receive an invitation email with a link to join your workspace. The number of team members you can invite depends on your plan — Starter supports 1 member, Growth supports up to 10, and Enterprise is unlimited. For a full guide on roles and permissions, see the [Team Collaboration documentation](/guides/team-collaboration).
+  </Accordion>
+
+  <Accordion title="What happens if a workflow fails?">
+    When a workflow step fails, QuantumFlow AI automatically retries it according to the retry policy configured for that step (the default is 3 retries with exponential backoff). If all retries are exhausted, the workflow run is marked as **Failed** and:
+
+    - A **task failure notification** is sent via your configured channels (email and/or Slack).
+    - A full execution trace is recorded in the **Task Log**, accessible from the workflow's Run History tab.
+    - If you've configured a `workflow.failed` webhook, your endpoint receives a payload immediately.
+
+    You can inspect exactly which step failed, view the error message and input/output data for each step, and re-trigger the workflow manually after resolving the underlying issue.
+  </Accordion>
+
+  <Accordion title="Can I test a workflow before going live?">
+    Yes. Every workflow in QuantumFlow AI can be tested without affecting your production systems. To run a test:
+
+    1. Open the workflow in the editor.
+    2. Set the trigger to **Manual** (or keep your existing trigger — it won't fire during testing).
+    3. Click **Test Run** in the toolbar.
+    4. Provide sample input data in the test runner panel if your workflow expects trigger data.
+    5. Click **Run Test** to execute the workflow step by step.
+
+    The test runner shows you the live output of each step as it executes, so you can inspect data transformations and agent outputs in real time. Test runs consume execution credits but are clearly labeled in your Run History so they don't pollute your production logs.
+  </Accordion>
+
+  <Accordion title="How do I delete my account?">
+    You can request account deletion from your profile settings. All workspace data — workflows, agents, logs, integrations, and API keys — is permanently purged within **30 days** of the request. Before deleting, make sure to export any data you want to keep. For step-by-step instructions, see the [Account Settings documentation](/configuration/account-settings#deleting-your-account).
+  </Accordion>
+
+  <Accordion title="Do you offer SLAs?">
+    Yes. QuantumFlow AI provides the following uptime SLAs:
+
+    - **Growth plan** — 99.5% monthly uptime SLA
+    - **Enterprise plan** — 99.9% monthly uptime SLA with a dedicated incident response process
+
+    Starter plan workspaces receive best-effort availability but are not covered by a formal SLA. If you need a higher SLA or custom support terms, [contact our sales team](mailto:sales@quantumflow.ai) to discuss an Enterprise agreement.
+  </Accordion>
+
+  <Accordion title="Can I self-host QuantumFlow AI?">
+    Self-hosting is available as an **Enterprise** feature. The self-hosted deployment option lets you run the full QuantumFlow AI platform inside your own cloud environment (AWS, GCP, or Azure), keeping all data and AI model calls entirely within your infrastructure. This option is well-suited for organizations with strict data residency requirements or air-gapped environments. To learn more, contact [sales@quantumflow.ai](mailto:sales@quantumflow.ai).
+  </Accordion>
+
+</AccordionGroup>

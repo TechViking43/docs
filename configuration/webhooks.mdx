@@ -1,0 +1,164 @@
+---
+title: "Configuring Outbound Webhooks in QuantumFlow AI"
+sidebarTitle: "Webhooks"
+description: "Set up outbound webhooks to receive real-time notifications from QuantumFlow AI when workflows complete, tasks fail, or agents escalate to a human."
+---
+
+QuantumFlow AI supports two distinct webhook directions: **outbound webhooks**, where QuantumFlow AI calls your server to notify you that something has happened, and **webhook triggers**, where your server calls QuantumFlow AI to start a workflow. This guide covers outbound webhooks — the mechanism that pushes real-time event data to an endpoint you control whenever key events occur inside your workspace.
+
+## Creating a Webhook
+
+<Steps>
+  <Step title="Open the Webhooks Panel">
+    Go to **Settings → Webhooks** and click **Add Webhook**.
+  </Step>
+  <Step title="Enter Your Endpoint URL">
+    Paste the full URL of the HTTPS endpoint that should receive the event payloads. Plain HTTP endpoints are not accepted — your server must have a valid TLS certificate.
+  </Step>
+  <Step title="Choose Events">
+    Select one or more events from the list. QuantumFlow AI sends a POST request to your endpoint only when a subscribed event fires. See the [Webhook Events](#webhook-events) section for the full list.
+  </Step>
+  <Step title="Copy the Signing Secret">
+    After saving, QuantumFlow AI generates a unique signing secret for this webhook. Copy it and store it securely — you will use it to verify that incoming requests genuinely originate from QuantumFlow AI.
+  </Step>
+  <Step title="Save the Webhook">
+    Click **Save**. QuantumFlow AI immediately sends a test `ping` event to your endpoint to confirm delivery.
+  </Step>
+</Steps>
+
+<Note>
+  Your endpoint must respond with an HTTP `200` status code within **10 seconds**. If the response times out or returns a non-2xx status, the delivery is marked as failed and will be retried automatically.
+</Note>
+
+---
+
+## Webhook Events
+
+Subscribe to any combination of the following events:
+
+| Event                 | Description                                                                 |
+|-----------------------|-----------------------------------------------------------------------------|
+| `workflow.completed`  | A workflow run finished all steps successfully.                             |
+| `workflow.failed`     | A workflow run failed after exhausting all configured retries.              |
+| `task.completed`      | An individual task within a workflow completed successfully.                |
+| `task.failed`         | An individual task within a workflow failed.                                |
+| `agent.escalated`     | An AI agent determined it could not proceed and escalated to human review.  |
+
+---
+
+## Webhook Payload
+
+QuantumFlow AI delivers a JSON body with every event. Below is an example payload for the `workflow.completed` event:
+
+```json
+{
+  "event": "workflow.completed",
+  "workflow_id": "wf_01j9abc123",
+  "task_id": "tsk_01j9xyz456",
+  "status": "completed",
+  "timestamp": "2024-01-15T10:35:00Z",
+  "output": {
+    "summary": "10 tickets analyzed and routed to the correct team."
+  }
+}
+```
+
+All payloads share the `event`, `workflow_id`, `status`, and `timestamp` fields. The `output` field is present on completion events and contains the structured data returned by the final step of the workflow. Failed-event payloads include an `error` object with a `code` and `message` field instead.
+
+---
+
+## Verifying Webhook Signatures
+
+QuantumFlow AI signs every outbound webhook request using **HMAC-SHA256**. The signature is included in the `X-QuantumFlow-Signature` header as a hex-encoded digest of the raw request body, keyed with your webhook's signing secret. Always verify this signature before processing a payload.
+
+<Tabs>
+  <Tab title="Python">
+    ```python
+    import hmac
+    import hashlib
+    from flask import request, abort
+
+    SIGNING_SECRET = "your_webhook_signing_secret"
+
+    def verify_signature(payload_body: bytes, signature_header: str) -> bool:
+        expected = hmac.new(
+            SIGNING_SECRET.encode("utf-8"),
+            payload_body,
+            hashlib.sha256
+        ).hexdigest()
+        return hmac.compare_digest(expected, signature_header)
+
+    @app.route("/webhook", methods=["POST"])
+    def handle_webhook():
+        signature = request.headers.get("X-QuantumFlow-Signature", "")
+        if not verify_signature(request.get_data(), signature):
+            abort(401, "Invalid signature")
+        # Process request.json safely
+        return "", 200
+    ```
+  </Tab>
+  <Tab title="Node.js">
+    ```javascript
+    const crypto = require("crypto");
+
+    const SIGNING_SECRET = "your_webhook_signing_secret";
+
+    function verifySignature(rawBody, signatureHeader) {
+      const expected = crypto
+        .createHmac("sha256", SIGNING_SECRET)
+        .update(rawBody)
+        .digest("hex");
+      return crypto.timingSafeEqual(
+        Buffer.from(expected),
+        Buffer.from(signatureHeader)
+      );
+    }
+
+    app.post("/webhook", express.raw({ type: "application/json" }), (req, res) => {
+      const signature = req.headers["x-quantumflow-signature"] || "";
+      if (!verifySignature(req.body, signature)) {
+        return res.status(401).send("Invalid signature");
+      }
+      const event = JSON.parse(req.body);
+      // Process event safely
+      res.sendStatus(200);
+    });
+    ```
+  </Tab>
+</Tabs>
+
+<Warning>
+  Always use a constant-time comparison function (such as `hmac.compare_digest` in Python or `crypto.timingSafeEqual` in Node.js) when comparing the expected and received signatures. A naive string equality check is vulnerable to timing attacks.
+</Warning>
+
+---
+
+## Retries and Failures
+
+If your endpoint fails to respond with an HTTP `2xx` status within 10 seconds, QuantumFlow AI marks the delivery as failed and retries it automatically with **exponential backoff**:
+
+| Retry Attempt | Delay         |
+|---------------|---------------|
+| 1st retry     | 30 seconds    |
+| 2nd retry     | 2 minutes     |
+| 3rd retry     | 10 minutes    |
+| 4th retry     | 30 minutes    |
+| 5th retry     | 2 hours       |
+
+After 5 failed attempts, the delivery is permanently marked as failed and no further retries are made.
+
+**Viewing the Delivery Log**
+
+To inspect failed or successful deliveries:
+
+<Steps>
+  <Step title="Open the Delivery Log">
+    Go to **Settings → Webhooks**, find the webhook in the list, and click **Delivery Log**.
+  </Step>
+  <Step title="Inspect the Delivery">
+    Click any delivery entry to view the full request headers, request body, response status, response body, and timestamp.
+  </Step>
+  <Step title="Replay a Failed Delivery">
+    On any failed delivery entry, click **Replay** to immediately redeliver the payload to your endpoint. This is useful for replaying events after you fix a bug in your handler.
+  </Step>
+</Steps>

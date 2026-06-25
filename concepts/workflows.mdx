@@ -1,0 +1,73 @@
+---
+title: "Workflows: Automating Multi-Step Business Processes"
+sidebarTitle: "Workflows"
+description: "Workflows in QuantumFlow AI connect triggers, AI agents, and actions into automated pipelines that run on schedule or in response to events."
+---
+
+Workflows let you string together triggers, AI agents, and actions into a single automated pipeline that runs without manual intervention. Where an individual agent handles one task, a workflow coordinates many — routing data between steps, applying conditional logic, handling errors gracefully, and producing a final output such as a notification, a database write, or a call to an external API. Workflows are the mechanism you use to encode entire business processes inside QuantumFlow AI.
+
+## Anatomy of a Workflow
+
+Every workflow is composed of three conceptual layers:
+
+<CardGroup cols={3}>
+  <Card title="Trigger" icon="bolt">
+    The event or schedule that starts the workflow. A trigger fires once per run and passes any relevant input data — such as a webhook payload or a scheduled timestamp — into the first step.
+  </Card>
+  <Card title="Steps" icon="sitemap">
+    The ordered set of operations that run after the trigger. Steps can invoke AI agents, evaluate conditions, transform data, or call integrations directly. Steps can run sequentially or branch based on logic you define.
+  </Card>
+  <Card title="Output" icon="arrow-right-from-bracket">
+    What happens at the end of a successful run. Common outputs include sending a Slack message, writing a row to a Google Sheet, calling a webhook, or simply returning a JSON result to the system that triggered the workflow.
+  </Card>
+</CardGroup>
+
+## Workflow States
+
+A workflow moves through the following states during its lifecycle:
+
+| State | Description |
+|---|---|
+| **Draft** | The workflow has been created but not yet activated. It cannot be triggered and does not appear in run history. Use this state while you are building and testing. |
+| **Active** | The workflow is live. It will fire when its trigger condition is met and will consume quota accordingly. |
+| **Paused** | The workflow is temporarily disabled. Existing in-flight runs finish, but no new runs start until you resume it. |
+| **Archived** | The workflow is deactivated and hidden from the default dashboard view. Run history is preserved according to your retention policy. Archived workflows can be restored at any time. |
+
+## Triggers
+
+QuantumFlow AI supports three trigger types. You select one trigger per workflow at creation time, though you can change it while the workflow is in draft or paused.
+
+**Schedule (Cron)**
+Run the workflow on a recurring schedule using standard cron syntax. For example, `0 9 * * 1-5` fires the workflow every weekday at 9:00 AM UTC. Scheduled workflows receive no external input — use the workflow's configuration to define the starting data.
+
+**Webhook (HTTP POST)**
+QuantumFlow AI generates a unique HTTPS endpoint for your workflow. Any system that can make an HTTP POST request — such as a form submission platform, another application, or a third-party service — can trigger the workflow by sending a JSON payload to that URL. The payload is available to all downstream steps as `trigger.body`.
+
+**Manual (API or Dashboard)**
+Trigger a single run from the QuantumFlow AI dashboard by clicking **Run Now**, or programmatically via the [REST API](/api-reference). Manual triggers are useful for testing, one-off tasks, or workflows you want humans to initiate explicitly.
+
+## Steps and Branching
+
+Steps execute in the order you define them in the workflow editor. Each step receives the output of the previous step as its input, along with the original trigger data.
+
+**Sequential steps** run one after another. Use sequential steps for linear processes where each action depends on the result of the one before it — for example, fetching data from an API, passing it to an agent for analysis, and then writing the result to a database.
+
+**Conditional branching** lets you fork the workflow based on a condition. You define an if/else expression using any field available in the step's input. The `true` branch and the `false` branch each continue independently, and both can have their own subsequent steps. Branches can also rejoin at a later merge step if the rest of the workflow should apply to both outcomes.
+
+**Loops** repeat a step — or a sequence of steps — for each item in an array. For example, if a prior step returns a list of ten customer records, a loop step runs your agent once per record and collects all results into an output array.
+
+## Error Handling
+
+QuantumFlow AI gives you fine-grained control over what happens when a step fails.
+
+**Retry policies** — For each step, you can configure how many times QuantumFlow AI retries on a transient failure (such as a network timeout or a rate-limit response from an external API). You set the maximum retry count and the delay strategy: fixed interval or exponential backoff.
+
+**Fallback steps** — If a step exhausts its retries and still fails, QuantumFlow AI can route execution to a designated fallback step instead of stopping the run. Use a fallback step to send an alert, log the failure to a data store, or return a safe default value to the next step.
+
+**Failure notifications** — You can configure a workflow-level failure notification that fires whenever a run ends in an error state. Notifications can be delivered to Slack, email, or any webhook you specify.
+
+<Tip>
+  Start simple. Build a two-step workflow — one trigger and one action — and confirm it runs end-to-end before adding branching or loops. Debugging is much faster when each layer of complexity is introduced incrementally.
+</Tip>
+
+For a step-by-step tutorial, see the [Create Your First Workflow guide](/guides/create-first-workflow).

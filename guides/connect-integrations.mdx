@@ -1,0 +1,93 @@
+---
+title: "Connect Your Business Tools to QuantumFlow AI"
+sidebarTitle: "Connect Integrations"
+description: "Step-by-step guide to connecting Slack, Google Workspace, Salesforce, and other integrations to QuantumFlow AI so your agents can read and act on your data."
+---
+
+Integrations are the backbone of any QuantumFlow workflow. They give your AI agents secure, scoped access to the business tools your team already uses — so agents can pull data from Zendesk, write summaries to Slack, update records in Salesforce, and more. This guide walks you through connecting both OAuth-based and API-key-based integrations, testing the connection, and managing the permissions each integration holds.
+
+<Info>
+**Before You Start**
+
+You must have the **Admin** or **Owner** role on your QuantumFlow workspace to add or remove integrations at the workspace level. Members with the Editor or Viewer role can use existing integrations inside workflows but cannot connect new ones. See [Team Collaboration](/guides/team-collaboration) to review and update roles.
+</Info>
+
+## Connecting an OAuth Integration (Slack)
+
+Most consumer and SaaS tools — including Slack, Google Workspace, Notion, and HubSpot — use OAuth to grant access. The process takes about a minute and never requires you to handle a password or token manually.
+
+<Steps>
+  <Step title="Open the Integrations settings">
+    From your dashboard, go to **Settings → Integrations**. This page lists all available integrations alongside their connection status.
+  </Step>
+
+  <Step title="Find and select Slack">
+    Use the search bar to filter by name. Type **Slack** and click the **Connect** button next to it.
+  </Step>
+
+  <Step title="Authorize with Slack">
+    Click **Authorize with Slack**. Your browser redirects to Slack's permission screen. You must be logged into the Slack workspace you want to connect, or log in now.
+  </Step>
+
+  <Step title="Choose your workspace and grant permissions">
+    In the Slack authorization screen, select the target workspace from the dropdown at the top-right. Review the list of permissions QuantumFlow is requesting — these are the minimum scopes required for your agents to read and post messages. Click **Allow** to grant access.
+  </Step>
+
+  <Step title="Confirm the connection">
+    Slack redirects you back to QuantumFlow. The Slack tile on the Integrations page now shows a green **Connected** badge along with the workspace name and the account that authorized it.
+  </Step>
+
+  <Step title="Assign the integration to agents or workflows">
+    By default, a newly connected integration is available for any workflow to use, but it is not actively granted to any agent. Navigate to the agent or workflow you want to use Slack with, open **Tool Access**, and toggle **Slack** on. This explicit assignment ensures agents only use the integrations they actually need.
+  </Step>
+</Steps>
+
+## Connecting via API Key (Airtable)
+
+Some tools — including Airtable, SendGrid, and custom internal APIs — authenticate with a static API key or personal access token rather than OAuth. The process is equally straightforward.
+
+<Steps>
+  <Step title="Open the Airtable integration">
+    Go to **Settings → Integrations**, search for **Airtable**, and click **Connect**.
+  </Step>
+
+  <Step title="Paste your personal access token">
+    In the Airtable connection dialog, paste your Airtable personal access token into the **Token** field. You can generate a token in your Airtable account under **Developer Hub → Personal Access Tokens**. Make sure the token has the base-level scopes your agents will need (e.g., `data.records:read`, `data.records:write`).
+  </Step>
+
+  <Step title="Verify and save">
+    Click **Verify and Save**. QuantumFlow makes a test call to Airtable's API to confirm the token is valid and the requested scopes are active. On success, the tile shows **Connected**. If verification fails, double-check the token value and its assigned scopes in Airtable.
+  </Step>
+</Steps>
+
+## Testing the Connection
+
+After connecting any integration, you can validate it at any time without running a full workflow.
+
+1. Go to **Settings → Integrations** and click on the connected integration.
+2. Click the **Test Connection** button in the integration detail panel.
+3. QuantumFlow sends a lightweight read request (e.g., listing accessible channels for Slack or listing bases for Airtable) and reports the result.
+
+| Result | What it means |
+|--------|---------------|
+| ✅ **Success** | The credentials are valid, scopes are active, and the integration is ready to use. |
+| ❌ **Authentication failed** | The token or OAuth grant has expired or been revoked. Reconnect the integration. |
+| ⚠️ **Insufficient permissions** | The connection is live but missing required scopes. Revisit the authorization in the external tool and re-authorize. |
+
+## Managing Integration Scopes
+
+QuantumFlow stores the exact scopes granted during authorization. You can review them at any time — and, for OAuth integrations, request expanded scopes if your agents need to perform additional actions.
+
+1. Open **Settings → Integrations** and select the integration.
+2. Click the **Scopes** tab to see a human-readable list of what QuantumFlow can and cannot do on your behalf (e.g., *Read messages*, *Post messages*, *Manage channels*).
+3. To expand scopes, click **Modify Permissions** and complete the OAuth or token update flow. To reduce scopes, revoke the current connection and reconnect with a more restricted token or authorization.
+
+Narrowing scopes is a good security practice — only grant agents the minimum access they need to complete their tasks.
+
+<Warning>
+**Keep your credentials secure.** Never share integration tokens, OAuth refresh tokens, or API keys with external parties. While QuantumFlow encrypts all credentials at rest and in transit, they should be treated as sensitive secrets. If you suspect a credential has been compromised, revoke it in the external tool immediately and reconnect with a new one.
+</Warning>
+
+## Supported Integrations
+
+QuantumFlow supports dozens of integrations across CRM, support, communication, productivity, and data categories. For the full list of supported tools, available scopes, and any per-integration setup notes, see the [Integrations Concepts](/concepts/integrations) reference.

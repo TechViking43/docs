@@ -1,0 +1,68 @@
+---
+title: "Data Handling and Privacy in QuantumFlow AI"
+sidebarTitle: "Data & Privacy"
+description: "Learn how QuantumFlow AI stores, processes, and protects your data, including retention policies, encryption standards, and compliance certifications."
+---
+
+QuantumFlow AI is built on the principle that your data belongs to you. Every architectural decision around storage, encryption, retention, and third-party data sharing is made with your security and privacy as the primary constraint. This page explains exactly what data QuantumFlow AI stores, how it is protected, how long it is kept, and the controls you have over it.
+
+## What Data QuantumFlow AI Stores
+
+QuantumFlow AI stores the following categories of data on your behalf:
+
+| Data Category | Description |
+|---|---|
+| **Workflow definitions** | The configuration of your workflows, including trigger settings, step order, branching logic, and assigned integrations. |
+| **Task run logs** | A record of each workflow or agent run, including the inputs passed into each step and the outputs produced. Logs are used for debugging, auditing, and run history. |
+| **Integration credentials** | API keys, OAuth tokens, and other secrets you provide when connecting integrations. All credentials are encrypted at rest before being written to storage. |
+| **Agent configurations** | The name, instructions (system prompt), model selection, tool assignments, and escalation rules for each agent in your workspace. |
+| **User account data** | Account identifiers, email addresses, authentication records, billing information, and audit logs of user activity within your workspace. |
+
+## Data Encryption
+
+QuantumFlow AI encrypts your data at every layer:
+
+**At rest** — All data stored by QuantumFlow AI, including run logs, integration credentials, and agent configurations, is encrypted using AES-256. Encryption keys are managed by QuantumFlow AI's key management service and are rotated on a regular schedule. Integration credentials and secrets are stored using envelope encryption, adding an additional layer of protection.
+
+**In transit** — All communication between your browser or API client and QuantumFlow AI, and all communication between QuantumFlow AI and external integrations, uses TLS 1.2 or higher. Connections that do not meet this standard are rejected.
+
+## Data Retention
+
+By default, QuantumFlow AI retains task run logs — including step inputs and outputs — for **90 days**. After the retention window passes, logs are permanently deleted from production storage.
+
+You can adjust the retention period for your workspace under **Settings → Data & Privacy → Log Retention**. Available options depend on your plan tier. Enterprise plans support custom retention periods, including indefinite retention for compliance use cases.
+
+If you need to delete specific run logs or all data associated with your workspace before the retention window expires, submit a request through **Settings → Data & Privacy → Delete My Data** or contact [support@quantumflow.ai](mailto:support@quantumflow.ai). Deletion requests are processed within 30 days in accordance with applicable regulations.
+
+## Compliance
+
+QuantumFlow AI maintains the following compliance certifications and frameworks:
+
+| Certification / Framework | Status |
+|---|---|
+| **SOC 2 Type II** | Certified. Audit reports are available to enterprise customers under NDA upon request. |
+| **GDPR** | Compliant. QuantumFlow AI acts as a data processor under GDPR and signs a Data Processing Agreement (DPA) with customers who require one. Request a DPA from your account settings or by contacting support. |
+| **Data Deletion Requests** | QuantumFlow AI fulfills data subject deletion requests within 30 days. Requests can be submitted by workspace administrators through the dashboard or by email. |
+
+## Your Data Is Not Used for Training
+
+<Note>
+  QuantumFlow AI does not use your data — including workflow definitions, run logs, agent configurations, or any content processed during a run — to train, fine-tune, or evaluate AI models. Your data is used solely to operate the services you have subscribed to.
+</Note>
+
+## Sharing Data with AI Providers
+
+When an agent runs, the inputs to that agent — including the system prompt, user messages, and any context passed in from prior steps — are sent to the AI model provider you have configured for that agent (for example, OpenAI for GPT-4o or Anthropic for Claude). This is necessary for the model to generate a response.
+
+QuantumFlow AI does not control how AI providers handle data on their infrastructure. You should review the privacy policies of the providers whose models you use:
+
+- [OpenAI Privacy Policy](https://openai.com/policies/privacy-policy)
+- [Anthropic Privacy Policy](https://www.anthropic.com/privacy)
+
+Both OpenAI and Anthropic offer API usage agreements under which your data is not used to train their models. QuantumFlow AI uses API-only access for all model calls, which means these agreements apply by default.
+
+If your organization requires that no data leave your own infrastructure, **Enterprise plans support private model deployments**. With a private deployment, agent runs are routed to a model hosted in your own cloud environment, and no data is sent to a third-party AI provider. Contact your account manager or [sales@quantumflow.ai](mailto:sales@quantumflow.ai) to set up a private deployment.
+
+<Tip>
+  Review your connected integrations and their granted scopes on a regular basis. Revoke any integrations you are no longer using to reduce your workspace's data footprint and minimize the potential impact of a compromised credential. Find this under **Settings → Integrations**.
+</Tip>

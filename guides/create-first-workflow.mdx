@@ -1,0 +1,94 @@
+---
+title: "Create Your First AI Workflow in QuantumFlow"
+sidebarTitle: "First Workflow"
+description: "Build and activate your first automated workflow in QuantumFlow AI — connect a trigger, add an AI agent step, and run your pipeline end-to-end."
+---
+
+By the end of this guide you will have a fully functional AI workflow running in QuantumFlow. You'll connect a trigger, wire up an AI agent step that processes real data, add an output action that delivers the result to your team, and confirm everything works with a live test run — all without writing a single line of code.
+
+<Info>
+**Prerequisites**
+
+- An active QuantumFlow account (any plan)
+- At least one integration connected to your workspace — if you haven't done this yet, follow the [Connect Integrations](/guides/connect-integrations) guide first
+</Info>
+
+## Building Your First Workflow
+
+<Steps>
+  <Step title="Open the Workflow Builder">
+    From your QuantumFlow dashboard, navigate to **Workflows** in the left sidebar, then click **New Workflow** in the top-right corner. The Workflow Builder opens in a blank canvas ready for your first pipeline.
+  </Step>
+
+  <Step title="Name your workflow and add a description">
+    In the panel on the right, enter a clear, descriptive name — for example, *Daily Support Ticket Summary*. Add a short description that explains what the workflow does and who it's for. Good names and descriptions make it easy for teammates to understand the workflow's purpose at a glance.
+  </Step>
+
+  <Step title="Choose a trigger">
+    Click the **Trigger** block at the top of the canvas. QuantumFlow gives you three trigger types:
+
+    | Trigger | When to use |
+    |---------|-------------|
+    | **Schedule** | Run automatically on a cron schedule (e.g., every weekday at 9 am) |
+    | **Webhook** | Fire the workflow when an external system sends an HTTP POST |
+    | **Manual** | Run on demand by clicking "Run Now" — ideal for testing |
+
+    For this guide, select **Manual** so you can run the workflow whenever you're ready without waiting for a schedule.
+  </Step>
+
+  <Step title="Add an AI Agent step">
+    Click the **+** icon below the trigger block to add a new step. From the step picker, choose **AI Agent Step**. You'll be prompted to either select an existing agent from your workspace or create a new one inline. If you already have an agent, select it now. If not, click **Create New Agent** and give it a name — you can configure it fully later in the [Custom AI Agents](/guides/custom-ai-agents) guide.
+  </Step>
+
+  <Step title="Configure the agent goal for this step">
+    With the AI Agent Step selected, open the **Goal** field in the right panel. Type a clear, task-specific instruction for what the agent should accomplish in this step. For example:
+
+    ```
+    Summarize the last 10 support tickets from Zendesk. For each ticket, include the ticket ID, subject, status, and a one-sentence summary of the issue. Output the result as a bulleted list.
+    ```
+
+    The goal you write here scopes the agent to this specific step — it does not permanently change the agent's global instructions.
+  </Step>
+
+  <Step title="Add an output step">
+    Click **+** again below the agent step to add your output action. From the step picker, select **Send Slack Message**. In the configuration panel:
+
+    - **Channel** — choose the Slack channel where you want the summary posted (e.g., `#support-digests`)
+    - **Message** — use the variable picker to insert the agent's output: `{{steps.agent_step.output}}`
+    - **Username** — optionally set a display name such as *QuantumFlow Bot*
+
+    This step will deliver the agent's formatted summary directly into Slack every time the workflow runs.
+  </Step>
+
+  <Step title="Save and test the workflow">
+    Click **Save** in the top-right corner. Once saved, click **Run Now** to trigger a manual execution. QuantumFlow queues the workflow immediately and begins processing. You'll see a progress indicator on the canvas as each step moves from *queued* → *running* → *completed*.
+  </Step>
+
+  <Step title="Review the task log">
+    After the run completes, click **View Log** on the execution banner, or navigate to **Workflows → Task Logs** and select the most recent entry. The log shows:
+
+    - The inputs passed to each step
+    - The agent's raw output before formatting
+    - The final message delivered to Slack
+    - Duration and any errors or warnings
+
+    Confirm the Slack message arrived in your channel. If any step shows a failure, the log will display the error message and a suggested fix.
+  </Step>
+</Steps>
+
+<Note>
+**Drafts are free.** Your workflow remains in *Draft* status until you explicitly activate it. Draft workflows are not billed — you only consume execution credits when a workflow is **Active** and executes. Take as much time as you need to iterate before going live.
+</Note>
+
+## What's Next
+
+Now that your first workflow is running, you can expand your automation footprint and explore more powerful features.
+
+<CardGroup cols={2}>
+  <Card title="Automate Recurring Tasks" icon="clock" href="/guides/automating-tasks">
+    Set up schedules, webhook triggers, and conditional logic to run your workflows automatically.
+  </Card>
+  <Card title="Workflows API Reference" icon="code" href="/api-reference/workflows">
+    Manage and trigger workflows programmatically using the QuantumFlow REST API.
+  </Card>
+</CardGroup>

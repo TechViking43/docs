@@ -1,0 +1,55 @@
+---
+title: "QuantumFlow AI Platform: How It All Works Together"
+sidebarTitle: "Platform Overview"
+description: "Understand the key building blocks of QuantumFlow AI — agents, workflows, integrations, and tasks — and how they combine to automate your business processes."
+---
+
+QuantumFlow AI is built around a small set of composable primitives that you combine to automate virtually any business process. At its core, the platform connects intelligent AI agents to your existing tools through structured workflows, and then executes those workflows as discrete, observable tasks. Whether you're routing support tickets, enriching CRM records, generating weekly reports, or orchestrating a full sales pipeline, every automation on QuantumFlow AI is assembled from the same four building blocks.
+
+## The Core Building Blocks
+
+Each primitive plays a distinct role. Understanding what each one does — and how they relate to each other — makes it straightforward to design automations that are reliable and easy to maintain.
+
+<CardGroup cols={2}>
+  <Card title="AI Agents" icon="robot" href="/concepts/ai-agents">
+    Agents are the intelligent actors in your workflows. You give each agent a goal, a set of capabilities, and access to specific tools — then the agent decides how to act to achieve that goal at runtime.
+  </Card>
+  <Card title="Workflows" icon="diagram-project" href="/concepts/workflows">
+    Workflows are the blueprints that connect triggers, agent steps, and actions into a repeatable sequence. Build them visually in the Workflow Builder or define them via the API.
+  </Card>
+  <Card title="Integrations" icon="plug" href="/concepts/integrations">
+    Integrations connect QuantumFlow AI to the tools your business already uses — Slack, Gmail, HubSpot, Salesforce, Notion, and more — using secure OAuth or API key authentication.
+  </Card>
+  <Card title="Tasks" icon="list-check" href="/support/faq">
+    Every time a workflow runs, it spawns a task. Tasks are individual execution records with a full log of inputs, outputs, agent decisions, and timing — giving you complete observability.
+  </Card>
+</CardGroup>
+
+## How a Typical Automation Works
+
+Seeing all four building blocks in action together makes the platform's design click. Here's how a complete automation flows from configuration to live execution.
+
+<Steps>
+  <Step title="Define an Agent with a Goal and Capabilities">
+    Start by creating an AI agent and giving it a clear objective — for example, "Summarize inbound support emails and classify them by urgency." You then assign it capabilities: which language model it uses, which tools it can call, and any constraints on how it behaves. The agent uses this configuration at runtime to make decisions autonomously.
+  </Step>
+  <Step title="Build a Workflow Connecting the Agent to Triggers and Actions">
+    Open the Workflow Builder and design the sequence your agent operates within. Set a trigger — such as a new email arriving, a scheduled time, a webhook from an external system, or a manual run — and then add your agent as a step. After the agent step, attach one or more output actions, such as posting a Slack message, updating a database record, or creating a task in your project management tool.
+  </Step>
+  <Step title="Connect Integrations to Your Tools">
+    Navigate to **Integrations** in your dashboard and authorize the apps your workflow depends on. QuantumFlow AI stores credentials securely and makes them available to your workflow steps automatically. You can connect the same integration to as many workflows as you need without re-authenticating.
+  </Step>
+  <Step title="Monitor Tasks as They Run in Real Time">
+    Once your workflow is active, every execution appears in the **Task Logs** panel as a live task record. You can inspect each step's inputs and outputs, see how the agent reasoned through its goal, replay failed tasks with a single click, and set up alerts to notify your team if something needs attention.
+  </Step>
+</Steps>
+
+## Pricing and Plans
+
+QuantumFlow AI offers three tiers designed to scale with your team and usage. The **Starter** plan gives individuals and small teams access to core workflow automation, a generous task quota, and standard integrations — ideal for getting started quickly. The **Growth** plan adds higher task volumes, advanced agent capabilities, priority support, and team collaboration features for businesses that are scaling their automations. The **Enterprise** plan provides unlimited workflows, dedicated infrastructure, custom SLAs, SSO, and a dedicated solutions engineer for organizations with complex or high-volume requirements.
+
+For full plan details, feature comparisons, and pricing information, visit the [Billing & Plans](/configuration/billing) page in your dashboard, or [contact our sales team](mailto:sales@quantumflow.ai) to discuss a custom arrangement.
+
+<Tip>
+  If you haven't built your first workflow yet, the [Quickstart guide](/quickstart) is the fastest way to get a feel for how all of these pieces work together in practice. It takes about five minutes and requires no prior setup.
+</Tip>

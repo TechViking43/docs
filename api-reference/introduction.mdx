@@ -1,0 +1,89 @@
+---
+title: "QuantumFlow AI REST API Reference"
+sidebarTitle: "Overview"
+description: "The QuantumFlow AI REST API lets you programmatically create agents, trigger workflows, monitor tasks, and manage integrations from any environment."
+---
+
+The QuantumFlow AI REST API gives you full programmatic control over every resource on the platform. Use it to create and configure AI agents, define and trigger automation workflows, poll task results, connect third-party integrations, and subscribe to real-time webhook events — all from your own backend, CI pipeline, or infrastructure-as-code tooling.
+
+## Base URL
+
+Every request targets the versioned base URL below. All paths in this reference are relative to it.
+
+```
+https://api.quantumflow.ai/v1
+```
+
+## Request Format
+
+Send all request bodies as JSON and include the `Content-Type: application/json` header on every mutating request. All endpoints accept and return UTF-8 encoded text.
+
+```http
+POST /v1/agents HTTP/1.1
+Host: api.quantumflow.ai
+Authorization: Bearer qf_live_••••••••••••••••
+Content-Type: application/json
+Accept: application/json
+```
+
+## Response Format
+
+Every response — success or failure — is a JSON object. Successful responses return the resource or collection you requested. Error responses always contain a top-level `error` object with a machine-readable `code` and a human-readable `message`.
+
+```json
+// Success
+{ "id": "wf_01j9abc123", "status": "active" }
+
+// Error
+{ "error": { "code": "not_found", "message": "Workflow wf_01j9abc123 not found" } }
+```
+
+## HTTP Status Codes
+
+| Code | Meaning |
+|------|---------|
+| `200` | **OK** — The request succeeded and the response body contains the result. |
+| `201` | **Created** — A new resource was created. The response body contains the new resource. |
+| `204` | **No Content** — The request succeeded and there is no response body (e.g. DELETE). |
+| `400` | **Bad Request** — The request was malformed or missing required fields. |
+| `401` | **Unauthorized** — Your API key is missing, malformed, or revoked. |
+| `403` | **Forbidden** — Your API key is valid but lacks the scope required for this action. |
+| `404` | **Not Found** — The requested resource does not exist. |
+| `422` | **Unprocessable Entity** — The request was well-formed but failed validation (e.g. an invalid cron expression). |
+| `429` | **Too Many Requests** — You have exceeded your plan's rate limit. See [Rate Limits](/api-reference/rate-limits). |
+| `500` | **Internal Server Error** — Something went wrong on QuantumFlow's side. Retry with exponential backoff. |
+
+## Pagination
+
+List endpoints use **cursor-based pagination** so you can iterate through large result sets reliably, even when records are added or removed between requests.
+
+Pass the following query parameters to control pagination:
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `limit` | integer | `20` | Number of records to return per page. Maximum is `100`. |
+| `cursor` | string | — | Opaque cursor pointing to the start of the next page. Omit on the first request. |
+
+When more records exist beyond the current page, the response body includes a `next_cursor` field. Pass that value as `cursor` on your next request to fetch the following page. When `next_cursor` is `null` or absent, you have reached the last page.
+
+```json
+{
+  "data": [ /* ... */ ],
+  "next_cursor": "cur_01j9abc999"
+}
+```
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/api-reference/authentication">
+    Learn how to generate and use your API key to authenticate every request.
+  </Card>
+  <Card title="Rate Limits" icon="gauge" href="/api-reference/rate-limits">
+    Understand per-plan request limits and how to implement a retry strategy.
+  </Card>
+  <Card title="Agents" icon="robot" href="/api-reference/agents">
+    Create and manage AI agents that power your automations.
+  </Card>
+  <Card title="Workflows" icon="diagram-project" href="/api-reference/workflows">
+    Build, trigger, and monitor intelligent automation workflows.
+  </Card>
+</CardGroup>

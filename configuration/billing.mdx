@@ -1,0 +1,113 @@
+---
+title: "QuantumFlow AI Plans, Billing, and Usage Limits"
+sidebarTitle: "Billing"
+description: "Understand QuantumFlow AI's pricing plans, execution credit model, usage limits, and how to manage your subscription and payment method."
+---
+
+QuantumFlow AI uses a credit-based billing model tied to a monthly subscription plan. Each plan determines how many execution credits your workspace receives per month, how many agents and workflows you can create, and the size of your team. This page explains how credits work, how to monitor your usage, and how to manage your subscription, payment method, and invoices.
+
+## Plans
+
+| Plan       | Execution Credits / mo | Agents    | Workflows | Team Members | Support         |
+|------------|------------------------|-----------|-----------|--------------|-----------------|
+| Starter    | 1,000                  | 3         | 5         | 1            | Community forum |
+| Growth     | 10,000                 | 20        | Unlimited | 10           | Email           |
+| Enterprise | Custom                 | Unlimited | Unlimited | Unlimited    | Dedicated       |
+
+All plans include access to the visual workflow builder, the agent designer, and all core integrations. Growth and Enterprise plans additionally unlock adjustable data retention, priority task queuing, and advanced audit logs.
+
+<Note>
+  Enterprise plans are invoiced annually and include custom credit volumes, SLA guarantees, and a dedicated account manager. Contact [sales@quantumflow.ai](mailto:sales@quantumflow.ai) to get a quote.
+</Note>
+
+---
+
+## Execution Credits
+
+An **execution credit** represents a single unit of AI work. Credits are consumed in two ways:
+
+- **Workflow step execution** — each step that runs in a workflow consumes one credit, regardless of whether the step is an action, a conditional branch, or a data transformation.
+- **Agent LLM call** — each time an AI agent sends a prompt to a language model and receives a response, one credit is consumed. A single agent interaction may involve multiple LLM calls (for reasoning, tool use, and response formatting).
+
+Credits are deducted in real time as workflows and agents execute. Your monthly allocation resets at the start of each billing cycle.
+
+**What Happens When You Run Out of Credits**
+
+If your workspace exhausts its monthly credit allocation:
+
+- All scheduled and trigger-based workflows are paused automatically.
+- Manually triggered workflows will not start.
+- You receive an email notification when you hit 100% usage.
+- Workflows resume automatically when your credit balance resets at the next billing cycle.
+
+You can also purchase additional credit top-ups at any time without upgrading your plan. Find this option in **Settings → Billing → Buy More Credits**.
+
+<Tip>
+  Set a credit usage alert in **Settings → Billing → Alerts** so you're notified before you run out. A threshold of 80% gives you time to act before workflows start pausing.
+</Tip>
+
+---
+
+## Viewing Usage
+
+To see a detailed breakdown of how your workspace is consuming credits:
+
+<Steps>
+  <Step title="Open the Usage Tab">
+    Go to **Settings → Billing → Usage**.
+  </Step>
+  <Step title="Review the Summary">
+    The summary panel shows your total credits used, credits remaining, and the date of your next billing cycle reset.
+  </Step>
+  <Step title="Drill Down by Workflow or Agent">
+    Use the **By Workflow** and **By Agent** tabs to see which automations are consuming the most credits. Each row shows total credits consumed in the current period and a daily usage trend sparkline.
+  </Step>
+</Steps>
+
+---
+
+## Managing Your Subscription
+
+**Upgrading Your Plan**
+
+<Steps>
+  <Step title="Go to Billing Settings">
+    Navigate to **Settings → Billing → Change Plan**.
+  </Step>
+  <Step title="Select the New Plan">
+    Choose the plan you want to upgrade to and review the summary of changes — new credit limits, agent and workflow limits, and the prorated charge for the remainder of the current billing period.
+  </Step>
+  <Step title="Confirm the Upgrade">
+    Click **Confirm Upgrade**. Your new credit allocation and limits take effect immediately.
+  </Step>
+</Steps>
+
+**Downgrading Your Plan**
+
+Downgrades follow the same steps as upgrades. However, a downgrade takes effect at the **start of your next billing cycle**, not immediately. If your current usage exceeds the limits of the lower plan (e.g., more than 5 workflows on Starter), you will be prompted to disable the excess workflows before the downgrade takes effect.
+
+---
+
+## Payment Methods
+
+QuantumFlow AI accepts the following payment methods:
+
+| Method            | Availability     |
+|-------------------|------------------|
+| Visa              | Worldwide        |
+| Mastercard        | Worldwide        |
+| American Express  | Worldwide        |
+| ACH bank transfer | United States only |
+
+To add or change your payment method, go to **Settings → Billing → Payment Methods** and click **Add Payment Method**. You can store multiple methods and set one as the default for recurring charges.
+
+---
+
+## Invoices
+
+QuantumFlow AI generates an invoice automatically on each billing date. Invoices are:
+
+- **Downloadable** as PDFs from **Settings → Billing → Invoices**.
+- **Auto-emailed** to the billing contact address on file at the time of each charge.
+
+To change the billing contact email or add a PO number or VAT ID to your invoices, go to **Settings → Billing → Billing Details**.

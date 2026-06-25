@@ -1,0 +1,171 @@
+---
+title: "Webhooks API — Register and Manage Event Endpoints"
+sidebarTitle: "Webhooks"
+description: "Programmatically register, list, and remove outbound webhook endpoints using the QuantumFlow AI Webhooks API."
+---
+
+Webhooks let you receive real-time notifications from QuantumFlow AI in your own systems the moment a significant event occurs — such as a workflow completing, a workflow failing, or an agent escalating an output for human review. Instead of polling the Tasks API to detect state changes, you register an HTTPS endpoint and QuantumFlow delivers a signed HTTP POST payload to it automatically. Use the Webhooks API to manage these registrations in code, rotate signing secrets, and keep your event subscriptions in sync with your infrastructure.
+
+---
+
+## List webhooks
+
+<api-endpoint method="GET" path="/v1/webhooks" />
+
+Returns all webhook endpoints currently registered in your workspace.
+
+### Response fields
+
+<ResponseField name="id" type="string">
+  The unique system-assigned identifier for the webhook registration (e.g. `whk_01j9mno789`).
+</ResponseField>
+
+<ResponseField name="url" type="string">
+  The HTTPS URL that QuantumFlow delivers event payloads to.
+</ResponseField>
+
+<ResponseField name="events" type="array">
+  The list of event names this webhook is subscribed to.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Delivery status: `active` or `disabled`. QuantumFlow automatically disables a webhook after repeated delivery failures.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 timestamp of when the webhook was registered.
+</ResponseField>
+
+### Response example
+
+```json
+{
+  "data": [
+    {
+      "id": "whk_01j9mno789",
+      "url": "https://yourapp.com/hooks/quantumflow",
+      "events": ["workflow.completed", "workflow.failed", "agent.escalated"],
+      "status": "active",
+      "created_at": "2024-01-15T10:30:00Z"
+    }
+  ],
+  "next_cursor": null
+}
+```
+
+---
+
+## Register a webhook
+
+<api-endpoint method="POST" path="/v1/webhooks" />
+
+Registers a new outbound webhook endpoint. QuantumFlow will immediately begin delivering matching events to the specified URL.
+
+### Request body
+
+<ParamField body="url" type="string" required>
+  The destination URL for event payloads. Must use HTTPS. HTTP URLs are rejected to ensure delivery security.
+</ParamField>
+
+<ParamField body="events" type="array" required>
+  An array of event name strings this webhook should subscribe to. Supported events:
+
+  | Event name | Triggered when |
+  |------------|----------------|
+  | `workflow.completed` | A workflow run finishes successfully. |
+  | `workflow.failed` | A workflow run encounters an unrecoverable error. |
+  | `workflow.started` | A workflow run begins executing. |
+  | `agent.escalated` | An agent routes output to an escalation channel. |
+  | `task.cancelled` | A running task is cancelled via the Tasks API. |
+</ParamField>
+
+<ParamField body="secret" type="string">
+  An optional signing secret used to generate an HMAC-SHA256 signature for every outbound payload. QuantumFlow includes the signature in the `X-QuantumFlow-Signature` request header so your endpoint can verify that payloads originate from QuantumFlow and have not been tampered with. If you omit this field, QuantumFlow generates a secret for you and returns it in the response as `signing_secret`.
+</ParamField>
+
+### Request and response example
+
+<CodeGroup>
+
+```json Request
+{
+  "url": "https://yourapp.com/hooks/quantumflow",
+  "events": ["workflow.completed", "workflow.failed", "agent.escalated"]
+}
+```
+
+```json Response 201
+{
+  "id": "whk_01j9mno789",
+  "url": "https://yourapp.com/hooks/quantumflow",
+  "events": ["workflow.completed", "workflow.failed", "agent.escalated"],
+  "signing_secret": "whsec_abc123xyz...",
+  "status": "active",
+  "created_at": "2024-01-15T10:30:00Z"
+}
+```
+
+</CodeGroup>
+
+<Warning>
+The `signing_secret` is only returned in full at the time of registration. Store it securely in your secrets manager immediately — you cannot retrieve the plaintext value again after this response. If you lose the secret, delete the webhook and register a new one.
+</Warning>
+
+### Verifying webhook signatures
+
+On each delivery, QuantumFlow sets the `X-QuantumFlow-Signature` header to `sha256=<hex-digest>`, computed as an HMAC-SHA256 of the raw request body using your signing secret. Verify the signature in your endpoint before processing the payload.
+
+```python
+import hmac
+import hashlib
+
+def verify_signature(payload_body: bytes, secret: str, signature_header: str) -> bool:
+    expected = "sha256=" + hmac.new(
+        secret.encode(), payload_body, hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, signature_header)
+```
+
+---
+
+## Retrieve a webhook
+
+<api-endpoint method="GET" path="/v1/webhooks/{id}" />
+
+Returns the details of a single registered webhook. The `signing_secret` field is not included in this response.
+
+### Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the webhook to retrieve (e.g. `whk_01j9mno789`).
+</ParamField>
+
+### Response example
+
+```json
+{
+  "id": "whk_01j9mno789",
+  "url": "https://yourapp.com/hooks/quantumflow",
+  "events": ["workflow.completed", "workflow.failed", "agent.escalated"],
+  "status": "active",
+  "created_at": "2024-01-15T10:30:00Z"
+}
+```
+
+---
+
+## Delete a webhook
+
+<api-endpoint method="DELETE" path="/v1/webhooks/{id}" />
+
+Permanently removes a webhook registration. QuantumFlow stops delivering events to the associated URL immediately. Returns `204 No Content` on success.
+
+### Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the webhook to delete.
+</ParamField>
+
+<Note>
+Deleting a webhook does not affect the events themselves — workflow runs and agent escalations continue to occur and are recorded in your Task history. Only the delivery of event payloads to the registered URL is stopped. To resume notifications, register a new webhook.
+</Note>

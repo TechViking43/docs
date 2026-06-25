@@ -1,0 +1,152 @@
+---
+title: "Build and Deploy a Custom AI Agent"
+sidebarTitle: "Custom Agents"
+description: "Create a tailored AI agent in QuantumFlow AI by defining its goal, choosing a language model, granting tool access, and deploying it inside a workflow."
+---
+
+QuantumFlow ships with a set of general-purpose agents, but the real power of the platform comes from building agents that are purpose-built for your team's specific processes. A custom agent has a defined role, a curated set of tool permissions, a chosen language model tuned to the task, and instructions that shape every response it produces. This guide walks you through creating one from scratch and deploying it into a live workflow.
+
+<Info>
+**Prerequisites**
+
+- An active QuantumFlow account (any plan)
+- At least one integration connected to your workspace — agents need tool access to do useful work. Follow [Connect Integrations](/guides/connect-integrations) if you haven't set one up yet.
+</Info>
+
+## Creating Your Agent
+
+<Steps>
+  <Step title="Navigate to the Agents section">
+    From the left sidebar, click **Agents**, then click **New Agent** in the top-right corner. The Agent Builder opens with a blank configuration form.
+  </Step>
+
+  <Step title="Name and describe your agent">
+    Enter a clear, role-specific name — for example, *Support Ticket Analyzer*. In the **Description** field, write a one- or two-sentence summary of what the agent does. This description appears in the workflow builder's step picker, so make it useful to your teammates.
+  </Step>
+
+  <Step title="Write the agent's instructions">
+    The **Instructions** field is the system prompt — the persistent directive the agent follows in every interaction. This is the single most important configuration decision you'll make. Some guidelines:
+
+    - **Be specific about the goal.** Vague instructions produce vague outputs. Tell the agent exactly what it is analyzing, summarizing, or generating.
+    - **Define the output format explicitly.** If you need a JSON object, a bulleted list, or a structured report, say so. Agents follow format instructions reliably when they are explicit.
+    - **Include a worked example.** A short example of a good output calibrates the agent better than descriptive words alone.
+    - **Set clear boundaries.** Tell the agent what it should NOT do — for example, "Do not access any records outside the current ticket" or "Do not speculate about customer intent."
+
+    A well-written instruction block for the Support Ticket Analyzer might look like this:
+
+    ```
+    You are a customer support analyst at Acme Corp. Your job is to review open Zendesk tickets and produce a concise daily summary.
+
+    For each ticket:
+    - Include the ticket ID, subject, current status, and priority level.
+    - Write a one-sentence summary of the customer's issue.
+    - Flag any ticket open for more than 48 hours as overdue.
+
+    Output format: a numbered list, sorted by priority (critical first).
+
+    Do NOT access tickets that are in a Closed or Resolved state.
+    Do NOT include any personally identifiable information (PII) beyond the ticket ID.
+    ```
+  </Step>
+
+  <Step title="Choose the AI model">
+    In the **Model** dropdown, select the language model that best fits the task. Use the table below to guide your choice:
+
+    | Model | Best for |
+    |-------|----------|
+    | **GPT-4o** | Complex reasoning, multi-step analysis, structured JSON output |
+    | **Claude 3.5 Sonnet** | Long documents, large context windows, nuanced summarization |
+    | **GPT-4o mini** | High-volume, low-latency tasks where speed and cost matter most |
+
+    For the Support Ticket Analyzer, **GPT-4o** is a good default — it handles structured output and prioritization logic reliably.
+  </Step>
+
+  <Step title="Grant tool access">
+    Click the **Tools** tab in the Agent Builder. You'll see a list of all connected integrations in your workspace. Toggle on only the tools this agent needs to complete its task:
+
+    - ✅ **Zendesk** — Read access (to fetch ticket data)
+    - ✅ **Slack** — Write access (to post summaries)
+    - ❌ Everything else — leave disabled
+
+    Least-privilege tool access prevents agents from accidentally reading or writing data outside their intended scope and reduces the blast radius of any unexpected behavior.
+  </Step>
+
+  <Step title="Set escalation rules">
+    Open the **Escalation** tab. Escalation rules define what happens when the agent is uncertain or encounters an edge case outside its instructions.
+
+    - Set a **confidence threshold** — for example, 70%. If the agent's output confidence falls below this level, it will not auto-deliver the result.
+    - Choose an escalation action — select **Notify human via Slack DM**, then pick the team member or on-call rotation to alert.
+    - Optionally add a **fallback message** that the agent sends along with the escalation to give the human context.
+
+    Escalation rules are especially important for agents that take write actions (e.g., updating a CRM record or sending an email) where a low-confidence output could cause real-world harm.
+  </Step>
+
+  <Step title="Save and test in the Playground">
+    Click **Save**. Then open the **Playground** tab at the top of the Agent Builder. The Playground gives you a live chat interface where you can send test messages to the agent and inspect its responses — including which tools it called, what data it retrieved, and why it made the choices it did.
+
+    Use the Playground to validate:
+    - Output format matches your instructions
+    - The agent is calling the right tools (and not the wrong ones)
+    - Edge-case inputs produce sensible responses or correctly trigger escalation
+  </Step>
+
+  <Step title="Deploy into a workflow">
+    Once the agent behaves as expected in the Playground, navigate to the workflow where you want to use it (or create a new one following the [First Workflow](/guides/create-first-workflow) guide). Add an **Agent Step**, click **Select Agent**, and choose your newly created agent from the list. The step will use the agent's full configuration — model, tools, escalation rules, and instructions — every time it runs.
+  </Step>
+</Steps>
+
+## Writing Effective Agent Instructions
+
+Instructions are the lever that separates a generic AI response from a reliably useful, production-grade agent output. Use this checklist every time you write or revise an agent's instruction block.
+
+<Accordion title="Start with the agent's role">
+  Open with a sentence that establishes who the agent is and what team it belongs to. This anchors all subsequent behavior.
+
+  ```
+  You are a customer support analyst for Acme Corp's enterprise support team.
+  ```
+</Accordion>
+
+<Accordion title="Define the expected output format explicitly">
+  Don't assume the agent will guess the right format. Specify structure, length, and any required fields.
+
+  ```
+  Your output must be a JSON array where each element has the keys:
+  "ticket_id", "subject", "status", "priority", and "summary".
+  ```
+</Accordion>
+
+<Accordion title="Include examples of good outputs">
+  A single concrete example is often more instructive than a paragraph of description.
+
+  ```json
+  Example output:
+  [
+    {
+      "ticket_id": "TKT-4821",
+      "subject": "Login failure after SSO update",
+      "status": "open",
+      "priority": "critical",
+      "summary": "Customer cannot log in following an SSO configuration change made on Dec 3."
+    }
+  ]
+  ```
+</Accordion>
+
+<Accordion title="Set explicit boundaries">
+  List what the agent should NOT do. Boundaries reduce hallucination and prevent the agent from over-reaching its intended scope.
+
+  ```
+  Do NOT access tickets in Closed or Resolved status.
+  Do NOT include customer names, email addresses, or any PII in the output.
+  Do NOT make assumptions about root cause — only report what is stated in the ticket.
+  ```
+</Accordion>
+
+<Tip>
+Use the **Playground** to iterate on instructions before deploying the agent to production. A small change in wording — for example, replacing "summarize" with "write a one-sentence description of the customer's problem" — can significantly improve output consistency.
+</Tip>
+
+## Learn More
+
+For a deeper look at how agents work under the hood — including how they plan multi-step actions, manage memory, and interact with tools — see the [AI Agents Concepts](/concepts/ai-agents) reference.

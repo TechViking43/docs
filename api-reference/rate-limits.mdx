@@ -1,0 +1,75 @@
+---
+title: "API Rate Limits and Retry Strategy for QuantumFlow"
+sidebarTitle: "Rate Limits"
+description: "QuantumFlow AI enforces per-API-key rate limits. Learn the limits per plan, how to read rate limit headers, and how to implement a retry strategy."
+---
+
+QuantumFlow AI enforces rate limits on a per-API-key basis to ensure fair resource allocation across all customers and protect platform stability. Limits are applied on a rolling window: the per-minute window resets 60 seconds after your first request in that window, and the per-hour window resets 3600 seconds after. When you exceed either limit, the API returns a `429 Too Many Requests` response until the window resets.
+
+## Limits by Plan
+
+| Plan | Requests / min | Requests / hour |
+|------|---------------|-----------------|
+| Starter | 60 | 600 |
+| Growth | 300 | 3,000 |
+| Enterprise | Custom | Custom |
+
+Enterprise customers can negotiate higher or burst limits directly with the QuantumFlow team. Contact your account manager or email [support@quantumflow.ai](mailto:support@quantumflow.ai) to discuss custom arrangements.
+
+## Rate Limit Headers
+
+Every API response — including successful ones — includes the following headers so you can monitor your consumption in real time.
+
+| Header | Type | Description |
+|--------|------|-------------|
+| `X-RateLimit-Limit` | integer | The maximum number of requests allowed in the current window. |
+| `X-RateLimit-Remaining` | integer | The number of requests you can still make before the window resets. |
+| `X-RateLimit-Reset` | integer | Unix timestamp (seconds) at which the current window expires and your allowance resets. |
+
+A `429` response also includes a `Retry-After` header containing the number of seconds to wait before retrying.
+
+## Handling 429 Responses
+
+When you receive a `429`, do not retry immediately. Use **exponential backoff** — wait for an increasing delay between each retry attempt. This prevents your retries from contributing to further rate-limit pressure and allows your allowance to recover.
+
+<CodeGroup>
+
+```python Python
+import time
+import requests
+
+def call_api_with_retry(url, headers, max_retries=5):
+    for attempt in range(max_retries):
+        response = requests.get(url, headers=headers)
+        if response.status_code == 429:
+            wait = 2 ** attempt
+            print(f"Rate limited. Retrying in {wait}s (attempt {attempt + 1}/{max_retries})")
+            time.sleep(wait)
+            continue
+        return response
+    raise Exception("Max retries exceeded")
+```
+
+```javascript JavaScript
+async function callWithRetry(url, options, maxRetries = 5) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const res = await fetch(url, options);
+    if (res.status === 429) {
+      const delay = 2 ** attempt * 1000;
+      console.log(`Rate limited. Retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+      await new Promise(r => setTimeout(r, delay));
+      continue;
+    }
+    return res;
+  }
+  throw new Error('Max retries exceeded');
+}
+```
+
+</CodeGroup>
+
+Both examples implement a simple exponential backoff: the wait time doubles with each failed attempt (1 s, 2 s, 4 s, 8 s, 16 s). For production workloads you should also add a small random jitter (e.g. `wait + random(0, 1000) ms`) to prevent multiple concurrent workers from retrying in lockstep.
+
+<Tip>
+Monitor the `X-RateLimit-Remaining` header on every response — not just on `429`s. If that value drops below a threshold that matters for your workload (for example, below 10), proactively slow down your request rate before you hit the limit entirely. This keeps your integration running smoothly without interruption.
+</Tip>

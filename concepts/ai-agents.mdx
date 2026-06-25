@@ -1,0 +1,63 @@
+---
+title: "What Are AI Agents in QuantumFlow AI?"
+sidebarTitle: "AI Agents"
+description: "AI agents in QuantumFlow AI are autonomous workers you configure to complete tasks, make decisions, and interact with your tools on your behalf."
+---
+
+AI agents are the core building blocks of QuantumFlow AI. Each agent is an autonomous worker you configure with a goal, a set of instructions, and access to specific tools. Once running, an agent interprets requests in natural language, decides which actions to take, calls the integrations it has permission to use, and returns a result — all without requiring you to write custom code or manage infrastructure.
+
+## What an Agent Can Do
+
+Agents in QuantumFlow AI are designed to handle the kind of multi-step, context-aware work that traditionally requires human coordination. A single agent can:
+
+- **Process natural language instructions** — understand goals written in plain English and translate them into concrete actions
+- **Make API calls to connected integrations** — read from and write to the tools in your stack, such as Slack, Salesforce, or GitHub
+- **Chain actions in a workflow** — execute a sequence of steps, passing outputs from one action as inputs to the next
+- **Remember context within a session** — retain information across turns in a single run, so follow-up instructions don't need to repeat prior context
+- **Escalate to humans when uncertain** — recognize when a decision exceeds its confidence threshold or configured scope, and route to a human reviewer before proceeding
+
+## Agent Types
+
+QuantumFlow AI provides three built-in agent archetypes. You can configure any of them from scratch or start from a template in the dashboard.
+
+<CardGroup cols={3}>
+  <Card title="Conversational Agent" icon="comments">
+    Handles back-and-forth interactions in natural language. Use this for customer support bots, internal Q&A assistants, or any scenario where a user sends a message and expects a reply.
+  </Card>
+  <Card title="Task Agent" icon="list-check">
+    Executes multi-step jobs from start to finish without human input at each step. Ideal for report generation, data enrichment, scheduled summaries, or any process with a defined beginning and end.
+  </Card>
+  <Card title="Monitor Agent" icon="eye">
+    Watches a data source or condition on a schedule and triggers a downstream action when a threshold is met. Use this for alerting on anomalies, monitoring pipeline health, or reacting to CRM changes.
+  </Card>
+</CardGroup>
+
+## Agent Configuration
+
+When you create or edit an agent, you define the following fields:
+
+| Field | Description |
+|---|---|
+| **Name** | A human-readable label used to identify the agent in your workspace and logs. |
+| **Goal / Instructions** | The system prompt that describes the agent's purpose, constraints, and behavior. This is the primary lever for shaping what the agent does and how it responds. |
+| **Model** | The underlying AI model the agent uses, such as GPT-4o, Claude 3.5 Sonnet, or any model available on your plan. Different models have different cost, speed, and capability trade-offs. |
+| **Tools & Integrations** | The specific integrations the agent is allowed to call. An agent can only access tools you explicitly grant — it cannot reach integrations connected to your workspace but not assigned to it. |
+| **Escalation Rules** | Conditions under which the agent pauses and requests human review. You can define rules based on confidence score, action type, or specific keywords in the input. |
+
+<Note>
+  Agents run entirely within your workspace. An agent can only access the integrations you have explicitly granted to it — it has no visibility into other agents' tool assignments or any integration you have not connected.
+</Note>
+
+## Limits and Quotas
+
+Every agent run consumes tokens against the model you have selected. The following limits apply depending on your plan:
+
+| Limit | Starter | Growth | Enterprise |
+|---|---|---|---|
+| **Max tokens per run** | 32,000 | 128,000 | Custom |
+| **Concurrent agents** | 3 | 20 | Unlimited |
+| **Run history retained** | 7 days | 90 days | Custom |
+
+If an agent run exceeds the token limit, it stops and returns a partial result along with a `token_limit_exceeded` status. You can split long tasks across multiple agents or upgrade your plan to increase the limit.
+
+For a hands-on walkthrough of building and deploying your first agent, see the [Custom AI Agents guide](/guides/custom-ai-agents).

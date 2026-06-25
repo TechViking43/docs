@@ -1,0 +1,154 @@
+---
+title: "Integrations API — Connect and Manage Third-Party Tools"
+sidebarTitle: "Integrations"
+description: "Use the Integrations API to list available connectors, retrieve connected integration details, and revoke access programmatically in QuantumFlow AI."
+---
+
+Integrations are the bridges between QuantumFlow AI and the external tools your agents need to read data from and act on — services like Zendesk, Slack, Airtable, HubSpot, and dozens more. Each connected integration is stored as a credential-backed resource with a unique ID that you reference when assigning tools to an agent or building workflow steps. Use the Integrations API to connect API-key-based services programmatically, inspect existing connections, and revoke access without touching the dashboard.
+
+---
+
+## List integrations
+
+<api-endpoint method="GET" path="/v1/integrations" />
+
+Returns all integrations currently connected to your workspace.
+
+### Response fields
+
+<ResponseField name="id" type="string">
+  The unique system-assigned identifier for the connected integration (e.g. `int_zendesk_01`). Use this ID when assigning tools to an agent.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The display name of the integration (e.g. `"Zendesk – Support Workspace"`).
+</ResponseField>
+
+<ResponseField name="provider" type="string">
+  The normalized provider slug (e.g. `zendesk`, `slack`, `airtable`).
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  Connection health status: `connected`, `degraded`, or `disconnected`.
+</ResponseField>
+
+<ResponseField name="connected_at" type="string">
+  ISO 8601 timestamp of when the integration was first connected.
+</ResponseField>
+
+### Response example
+
+```json
+{
+  "data": [
+    {
+      "id": "int_zendesk_01",
+      "name": "Zendesk – Support Workspace",
+      "provider": "zendesk",
+      "status": "connected",
+      "connected_at": "2024-01-10T14:00:00Z"
+    },
+    {
+      "id": "int_slack_01",
+      "name": "Slack – Engineering",
+      "provider": "slack",
+      "status": "connected",
+      "connected_at": "2024-01-10T14:05:00Z"
+    }
+  ],
+  "next_cursor": null
+}
+```
+
+---
+
+## Connect an integration
+
+<api-endpoint method="POST" path="/v1/integrations" />
+
+Connects a new integration using an API key or static token. This endpoint supports non-OAuth providers where credentials are supplied directly. For OAuth-based providers (e.g. Slack, Google), use the dashboard OAuth flow — those connections cannot be initiated via API.
+
+### Request body
+
+<ParamField body="provider" type="string" required>
+  The provider slug to connect (e.g. `airtable`, `zendesk`, `notion`). Must match a provider slug supported by QuantumFlow. See the dashboard's integration catalogue for the full list.
+</ParamField>
+
+<ParamField body="credentials" type="object" required>
+  An object containing the authentication credential for this provider. Accepted keys vary by provider:
+  - `api_key` — used by most REST API providers (e.g. Airtable, Notion).
+  - `token` — used by token-based providers.
+
+  Credentials are encrypted at rest and never returned in plaintext after creation.
+</ParamField>
+
+### Request and response example
+
+<CodeGroup>
+
+```json Request
+{
+  "provider": "airtable",
+  "credentials": { "api_key": "keyXXXXXXXXXXXXXX" }
+}
+```
+
+```json Response 201
+{
+  "id": "int_airtable_07",
+  "name": "Airtable",
+  "provider": "airtable",
+  "status": "connected",
+  "connected_at": "2024-01-15T11:00:00Z"
+}
+```
+
+</CodeGroup>
+
+<Note>
+QuantumFlow validates the supplied credentials against the provider's API at connection time. If validation fails — for example because the API key is invalid or has insufficient permissions — the API returns a `422 Unprocessable Entity` error with a descriptive message.
+</Note>
+
+---
+
+## Retrieve an integration
+
+<api-endpoint method="GET" path="/v1/integrations/{id}" />
+
+Returns full details for a single connected integration identified by its `id`. Credential values are never included in the response.
+
+### Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the integration to retrieve (e.g. `int_airtable_07`).
+</ParamField>
+
+### Response example
+
+```json
+{
+  "id": "int_airtable_07",
+  "name": "Airtable",
+  "provider": "airtable",
+  "status": "connected",
+  "connected_at": "2024-01-15T11:00:00Z"
+}
+```
+
+---
+
+## Disconnect an integration
+
+<api-endpoint method="DELETE" path="/v1/integrations/{id}" />
+
+Revokes credentials and permanently removes the integration from your workspace. Returns `204 No Content` on success.
+
+### Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the integration to disconnect.
+</ParamField>
+
+<Warning>
+Disconnecting an integration immediately revokes its credentials. Any workflow steps or agents that reference this integration's ID will fail at runtime until you connect a replacement and update the relevant agent tool lists. Before disconnecting, audit your agents and workflow steps for references to this integration ID.
+</Warning>

@@ -1,0 +1,235 @@
+---
+title: "Workflows API — Build and Trigger Automations"
+sidebarTitle: "Workflows"
+description: "REST API endpoints for creating workflows, managing their steps, triggering runs, and checking execution status in QuantumFlow AI."
+---
+
+Workflows are the orchestration layer of QuantumFlow AI. A workflow chains together agents, integrations, and conditional logic into a repeatable automation that runs on a schedule, in response to a webhook event, or on demand. Every time a workflow executes, QuantumFlow creates a [Task](/api-reference/tasks) you can use to track progress and retrieve results. Use the Workflows API to define and version your automations in code, trigger runs from your own systems, and manage workflow lifecycle from `draft` through `active` to `paused`.
+
+---
+
+## Create a workflow
+
+<api-endpoint method="POST" path="/v1/workflows" />
+
+Creates a new workflow in `draft` status. A draft workflow can be configured and tested without running automatically. Activate it explicitly with a `PATCH` request when you are ready.
+
+### Request body
+
+<ParamField body="name" type="string" required>
+  A descriptive name for the workflow (e.g. `"Daily Support Summary"`). Displayed in the dashboard and in Task records.
+</ParamField>
+
+<ParamField body="description" type="string">
+  An optional plain-text description explaining the workflow's purpose. Useful for documentation and team collaboration.
+</ParamField>
+
+<ParamField body="trigger" type="object">
+  Defines when and how the workflow starts. Contains two keys:
+  - `type` (string, required): One of `schedule`, `webhook`, or `manual`.
+  - `config` (object): Trigger-specific configuration. For `schedule`, provide a `cron` expression. For `webhook`, provide the expected `event` name. `manual` triggers require no config.
+</ParamField>
+
+### Request and response example
+
+<CodeGroup>
+
+```json Request
+{
+  "name": "Daily Support Summary",
+  "description": "Runs every morning at 9am on weekdays",
+  "trigger": {
+    "type": "schedule",
+    "config": { "cron": "0 9 * * 1-5" }
+  }
+}
+```
+
+```json Response 201
+{
+  "id": "wf_01j9abc123",
+  "name": "Daily Support Summary",
+  "description": "Runs every morning at 9am on weekdays",
+  "status": "draft",
+  "created_at": "2024-01-15T10:30:00Z"
+}
+```
+
+</CodeGroup>
+
+---
+
+## Trigger a workflow run
+
+<api-endpoint method="POST" path="/v1/workflows/{id}/run" />
+
+Manually triggers a single execution of the workflow, regardless of its configured trigger type. This is useful for testing, on-demand runs, and integrating QuantumFlow into external orchestration systems. The endpoint enqueues the run immediately and returns a `task_id` you can use to track execution via the [Tasks API](/api-reference/tasks).
+
+### Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the workflow to run.
+</ParamField>
+
+### Request body
+
+<ParamField body="inputs" type="object">
+  An optional key-value map of runtime input variables to pass into the workflow. These are accessible to agents and step logic within the run context.
+
+  ```json
+  { "inputs": { "date_range": "last_7_days", "team": "support" } }
+  ```
+</ParamField>
+
+### Response example
+
+```json
+{
+  "task_id": "tsk_01j9xyz456",
+  "workflow_id": "wf_01j9abc123",
+  "status": "queued"
+}
+```
+
+---
+
+## Retrieve a workflow
+
+<api-endpoint method="GET" path="/v1/workflows/{id}" />
+
+Returns the full definition of a workflow, including its configured steps.
+
+### Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the workflow to retrieve.
+</ParamField>
+
+### Response fields
+
+<ResponseField name="id" type="string">
+  The unique system-assigned identifier for the workflow.
+</ResponseField>
+
+<ResponseField name="name" type="string">
+  The display name of the workflow.
+</ResponseField>
+
+<ResponseField name="description" type="string">
+  The optional description of the workflow.
+</ResponseField>
+
+<ResponseField name="trigger" type="object">
+  The trigger configuration object, including `type` and `config`.
+</ResponseField>
+
+<ResponseField name="steps" type="array">
+  An ordered array of step objects that make up the workflow. Each step references an agent or integration action, along with input/output mappings.
+</ResponseField>
+
+<ResponseField name="status" type="string">
+  The current lifecycle status: `draft`, `active`, or `paused`.
+</ResponseField>
+
+<ResponseField name="created_at" type="string">
+  ISO 8601 timestamp of when the workflow was created.
+</ResponseField>
+
+<ResponseField name="updated_at" type="string">
+  ISO 8601 timestamp of when the workflow was last modified.
+</ResponseField>
+
+---
+
+## Update a workflow
+
+<api-endpoint method="PATCH" path="/v1/workflows/{id}" />
+
+Partially updates a workflow's configuration. You can modify the `name`, `description`, `trigger`, or `status`. Only the fields you include in the request body are changed.
+
+### Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the workflow to update.
+</ParamField>
+
+### Workflow status transitions
+
+| From | To | Effect |
+|------|----|--------|
+| `draft` | `active` | Enables the configured trigger; the workflow will now run on schedule or respond to webhooks. |
+| `active` | `paused` | Disables the trigger; no new runs will start until the workflow is re-activated. |
+| `paused` | `active` | Re-enables the trigger. |
+
+### Request and response example
+
+<CodeGroup>
+
+```json Request
+{
+  "status": "active"
+}
+```
+
+```json Response 200
+{
+  "id": "wf_01j9abc123",
+  "name": "Daily Support Summary",
+  "status": "active",
+  "updated_at": "2024-01-16T09:00:00Z"
+}
+```
+
+</CodeGroup>
+
+---
+
+## Delete a workflow
+
+<api-endpoint method="DELETE" path="/v1/workflows/{id}" />
+
+Permanently deletes a workflow and all of its step configuration. Returns `204 No Content` on success.
+
+### Path parameters
+
+<ParamField path="id" type="string" required>
+  The unique identifier of the workflow to delete.
+</ParamField>
+
+<Warning>
+You must pause an active workflow before deleting it. Attempting to delete a workflow with `status: active` returns a `409 Conflict` error. Pause the workflow first with a `PATCH` request, then delete it. Note that deleting a workflow does not delete its historical Task records — those remain queryable via the Tasks API.
+</Warning>
+
+---
+
+## List workflows
+
+<api-endpoint method="GET" path="/v1/workflows" />
+
+Returns a paginated list of all workflows in your workspace, ordered by creation date descending.
+
+### Query parameters
+
+<ParamField query="limit" type="integer" default="20">
+  Number of workflows to return per page. Maximum is `100`.
+</ParamField>
+
+<ParamField query="cursor" type="string">
+  Pagination cursor from the `next_cursor` field of the previous response. Omit on the first request.
+</ParamField>
+
+### Response example
+
+```json
+{
+  "data": [
+    {
+      "id": "wf_01j9abc123",
+      "name": "Daily Support Summary",
+      "status": "active",
+      "created_at": "2024-01-15T10:30:00Z"
+    }
+  ],
+  "next_cursor": null
+}
+```

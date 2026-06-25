@@ -1,0 +1,103 @@
+---
+title: "Set Up Team Collaboration and Access Control"
+sidebarTitle: "Team Collaboration"
+description: "Invite teammates, assign roles, and control who can view, edit, or run workflows in QuantumFlow AI using workspace roles and permission settings."
+---
+
+QuantumFlow is built for teams. Whether you're a two-person startup or a hundred-person operations department, you can invite colleagues, assign appropriate roles, and ensure that the people who need access have it — while preventing accidental edits or unauthorized changes. This guide covers workspace roles, the invitation flow, role management, workflow-level access, and audit logging.
+
+## Workspace Roles
+
+Every member of your QuantumFlow workspace is assigned one of four roles. Roles apply across the entire workspace unless workflow-level restrictions are configured (see [Workflow-Level Access](#workflow-level-access) below).
+
+| Role | Permissions |
+|------|-------------|
+| **Owner** | Full access to all features, billing management, and the ability to delete the workspace. There can be multiple Owners but at least one must always exist. |
+| **Admin** | Manage team members (invite, change roles, remove), connect or disconnect integrations, and create, edit, or delete any workflow or agent. Cannot access billing or delete the workspace. |
+| **Editor** | Create and edit workflows and agents. Can run workflows manually. Cannot manage team members, integrations, or billing. |
+| **Viewer** | Read-only access to workflows, agent configurations, and task logs. Cannot create, edit, run, or delete anything. |
+
+## Inviting Team Members
+
+<Steps>
+  <Step title="Open Team Settings">
+    From the left sidebar, navigate to **Settings → Team**. You'll see a list of all current workspace members, their roles, and when they were last active.
+  </Step>
+
+  <Step title="Click Invite Member">
+    Click the **Invite Member** button in the top-right corner of the Team page. A dialog box opens.
+  </Step>
+
+  <Step title="Enter the email address and select a role">
+    Type the invitee's work email address in the **Email** field. Then choose their role from the **Role** dropdown. If you're unsure, start with **Viewer** — you can always upgrade the role once they've joined.
+  </Step>
+
+  <Step title="Send the invite">
+    Click **Send Invite**. QuantumFlow sends the invitee an email containing a secure, time-limited link to join the workspace. The invitation expires after 7 days. If they don't receive it, check their spam folder or resend the invite from the **Pending Invites** section at the bottom of the Team page.
+  </Step>
+</Steps>
+
+Once the invitee accepts the invite and completes sign-up, they appear in the active member list and can immediately access the workspace according to their assigned role.
+
+## Managing Permissions
+
+Only **Owners** and **Admins** can change roles or remove members.
+
+**To change a member's role:**
+
+1. Go to **Settings → Team** and find the member in the list.
+2. Click the role badge next to their name. A dropdown appears with all available roles.
+3. Select the new role. The change takes effect immediately — no confirmation email is sent to the member.
+
+**To remove a member:**
+
+1. Click the **⋯** (more options) menu at the end of the member's row.
+2. Select **Remove from Workspace**.
+3. Confirm the removal in the dialog. The member loses access instantly. Any workflows or agents they created remain in the workspace and are reassigned to the Admin who performed the removal.
+
+<Note>
+Removing a member does not delete their work. Workflows, agents, and integrations they set up continue to function normally after they've been removed.
+</Note>
+
+## Workflow-Level Access
+
+By default, the workspace roles above apply universally — an Editor can edit any workflow in the workspace. For teams that need tighter separation, QuantumFlow supports **workflow-level access restrictions** as an Enterprise feature.
+
+When workflow-level access is enabled, Editors can be scoped to a specific set of workflows. An Editor scoped to the *Customer Support* workflow group cannot see or edit workflows in the *Finance Automation* group, even though both live in the same workspace.
+
+To configure workflow-level access:
+
+1. Open the workflow you want to restrict.
+2. Go to its **Settings** tab and find the **Access** section.
+3. Switch the access model from **Workspace-wide** to **Restricted**.
+4. Add the specific members or groups who should have Editor access to this workflow.
+
+Workflow-level access is available on the Enterprise plan. For plan details and to enable this feature, see [Account Settings](/configuration/account-settings).
+
+## Audit Logs
+
+QuantumFlow automatically records every significant action taken in your workspace. Audit logs are available to Owners and Admins under **Settings → Audit Log**.
+
+Each log entry captures:
+
+| Field | Description |
+|-------|-------------|
+| **Timestamp** | The exact date and time the action occurred (UTC) |
+| **Actor** | The team member who performed the action |
+| **Action** | What was done (e.g., *Workflow activated*, *Integration connected*, *Member role changed*) |
+| **Target** | The resource that was affected (e.g., the workflow name, integration name, or member email) |
+| **IP Address** | The IP from which the action was performed |
+
+Logged action categories include:
+
+- Workflow created, edited, activated, deactivated, or deleted
+- Agent created, modified, or deployed
+- Integration connected or disconnected
+- Member invited, role changed, or removed
+- API key generated or revoked
+
+You can filter logs by date range, actor, or action type, and export them as a CSV for compliance reporting, security audits, or incident investigations.
+
+<Tip>
+Assign the **Viewer** role to stakeholders — executives, account managers, or QA reviewers — who need visibility into workflow outputs and task logs but shouldn't be able to make changes. It's the safest way to give someone insight without giving them the ability to accidentally break a production workflow.
+</Tip>
